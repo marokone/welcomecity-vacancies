@@ -3,14 +3,22 @@ export default {
     async init() {
         console.log('🎛️ Инициализация системы фильтров...');
 
-        handleVacancyClick(card) {
-    const key = decodeURIComponent(card.dataset.key);
-    const [title, project, department] = key.split('|');
-    const vacancy = this.vacancies.find(v => 
-        v.title === title && 
-        (v.project || '') === (project || '') && 
-        v.department === department
-    );
+       handleVacancyClick(vacancy) {
+    if (window.tildaIntegration && window.tildaIntegration.isTildaEnvironment) {
+        // Используем модальное окно в Tilda
+        window.showVacancyDetail(vacancy);
+    } else {
+        // GitHub Pages - обычное поведение
+        window.open(`vacancy-detail.html?id=${vacancy.id}`, '_blank');
+    }
+}
+        // Добавляем метод для обновления данных
+updateVacancyData(data) {
+    this.vacancyData = { ...this.vacancyData, ...data };
+    if (window.updateVacancyData) {
+        window.updateVacancyData(data);
+    }
+}
     
     if (vacancy) {
         // Используем функцию из Tilda интеграции
