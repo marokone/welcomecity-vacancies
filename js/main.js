@@ -2,13 +2,14 @@
 class VacancyApp {
     constructor() {
         this.config = {
-            supabaseUrl: 'https://vhbiezamhpyejdqvvwuj.supabase.co',
-            supabaseKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZoYmllemFtaHB5ZWpkcXZ2d3VqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjE2Njc0MDgsImV4cCI6MjA3NzI0MzQwOH0.13h_XJ7kQFtuCjavkOXN9TzXNF2X4jX5-rcNCFiFqO0',
+            // ЗАМЕНИТЕ ваши текущие credentials на эти placeholders
+            supabaseUrl: 'SUPABASE_URL_PLACEHOLDER',
+            supabaseKey: 'SUPABASE_KEY_PLACEHOLDER',
             cacheKeys: {
                 data: 'wc-vacancies-data',
                 timestamp: 'wc-vacancies-timestamp'
             },
-            cacheTTL: 5 * 60 * 1000 // 5 минут
+            cacheTTL: 5 * 60 * 1000
         };
         
         this.state = {
@@ -23,6 +24,21 @@ class VacancyApp {
         };
         
         this.init();
+    }
+
+    initializeSupabase() {
+        if (window.supabase) {
+            // Используем credentials из конфига (уже подставленные GitHub Action)
+            this.state.supabase = window.supabase.createClient(
+                this.config.supabaseUrl, 
+                this.config.supabaseKey
+            );
+            console.log('✅ Supabase инициализирован');
+            return true;
+        } else {
+            console.error('❌ Supabase JS не загружен');
+            return false;
+        }
     }
 
     async init() {
