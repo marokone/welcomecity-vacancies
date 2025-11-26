@@ -719,45 +719,69 @@ class VacancyApp {
     }
 
     renderFilters() {
-        console.log('🎛️ Rendering filters...');
+    console.log('🎛️ Rendering filters...');
+    
+    const projects = this.getAvailableProjects(this.state.currentDepartment);
+    const depts = this.getAvailableDepartments(this.state.currentProject);
+    
+    // Десктопные фильтры
+    const projDropdown = document.querySelector('#project-filter .select-dropdown');
+    const deptDropdown = document.querySelector('#department-filter .select-dropdown');
+    
+    if (projDropdown) {
+        projDropdown.innerHTML = Object.entries(projects)
+            .sort(([a], [b]) => a.localeCompare(b))
+            .map(([p, c]) => {
+                const checked = this.state.currentProject.includes(p) ? 'checked' : '';
+                return `
+                    <div class="dropdown-item">
+                        <input type="checkbox" value="${p}" ${checked}>
+                        <label data-count="(${c})">${p}</label>
+                    </div>
+                `;
+            }).join('');
         
-        const projects = this.getAvailableProjects(this.state.currentDepartment);
-        const depts = this.getAvailableDepartments(this.state.currentProject);
-        
-        // Десктопные фильтры
-        const projDropdown = document.querySelector('#project-filter .select-dropdown');
-        const deptDropdown = document.querySelector('#department-filter .select-dropdown');
-        
-        if (projDropdown) {
-            projDropdown.innerHTML = Object.entries(projects)
-                .sort(([a], [b]) => a.localeCompare(b))
-                .map(([p, c]) => {
-                    const checked = this.state.currentProject.includes(p) ? 'checked' : '';
-                    return `<label class="dropdown-item"><input type="checkbox" value="${p}" ${checked}> ${p} (${c})</label>`;
-                }).join('');
-            const projValues = document.querySelector('#project-filter .selected-values');
-            if (projValues) {
-                projValues.textContent = this.state.currentProject.length ? this.state.currentProject.join(', ') : 'Все проекты';
+        const projValues = document.querySelector('#project-filter .selected-values');
+        if (projValues) {
+            if (this.state.currentProject.length > 0) {
+                projValues.textContent = this.state.currentProject.join(', ');
+                projValues.classList.add('multiple');
+            } else {
+                projValues.textContent = '';
+                projValues.classList.remove('multiple');
             }
         }
-
-        if (deptDropdown) {
-            deptDropdown.innerHTML = Object.entries(depts)
-                .sort(([a], [b]) => a.localeCompare(b))
-                .map(([d, c]) => {
-                    const checked = this.state.currentDepartment.includes(d) ? 'checked' : '';
-                    return `<label class="dropdown-item"><input type="checkbox" value="${d}" ${checked}> ${d} (${c})</label>`;
-                }).join('');
-            const deptValues = document.querySelector('#department-filter .selected-values');
-            if (deptValues) {
-                deptValues.textContent = this.state.currentDepartment.length ? this.state.currentDepartment.join(', ') : 'Все подразделения';
-            }
-        }
-
-        this.renderMobileFilters();
-        this.updateResetButtonVisibility();
-        this.updateMobileApplyButton();
     }
+
+    if (deptDropdown) {
+        deptDropdown.innerHTML = Object.entries(depts)
+            .sort(([a], [b]) => a.localeCompare(b))
+            .map(([d, c]) => {
+                const checked = this.state.currentDepartment.includes(d) ? 'checked' : '';
+                return `
+                    <div class="dropdown-item">
+                        <input type="checkbox" value="${d}" ${checked}>
+                        <label data-count="(${c})">${d}</label>
+                    </div>
+                `;
+            }).join('');
+        
+        const deptValues = document.querySelector('#department-filter .selected-values');
+        if (deptValues) {
+            if (this.state.currentDepartment.length > 0) {
+                deptValues.textContent = this.state.currentDepartment.join(', ');
+                deptValues.classList.add('multiple');
+            } else {
+                deptValues.textContent = '';
+                deptValues.classList.remove('multiple');
+            }
+        }
+    }
+
+    this.renderMobileFilters();
+    this.updateResetButtonVisibility();
+    this.updateMobileApplyButton();
+}
 
     renderMobileFilters() {
         const projects = this.getAvailableProjects(this.state.currentDepartment);
