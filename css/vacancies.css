@@ -1012,3 +1012,372 @@
     transform: none !important;
   }
 }
+/* ===== ВЫПАДАЮЩИЕ СПИСКИ В СТИЛЕ АВИТО ===== */
+.custom-select {
+  position: relative;
+  font-family: 'Inter', sans-serif;
+  flex: 1;
+  min-width: 260px;
+  max-width: 320px;
+}
+
+.select-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem 1.25rem;
+  border: 2px solid var(--gray-300);
+  border-radius: var(--radius-lg);
+  background: var(--white);
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+  box-shadow: var(--shadow-sm);
+  min-height: 56px;
+}
+
+.select-header:hover {
+  border-color: var(--gray-400);
+  box-shadow: var(--shadow);
+  transform: translateY(-1px);
+}
+
+.select-header .selected-values {
+  flex: 1;
+  margin-right: 1rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 1rem;
+  color: var(--gray-800);
+  font-weight: 500;
+  line-height: 1.4;
+}
+
+/* Когда ничего не выбрано - серый текст */
+.select-header .selected-values:empty::before {
+  content: "Все проекты";
+  color: var(--gray-500);
+}
+
+.select-controls {
+  display: flex;
+  gap: 0.75rem;
+  align-items: center;
+}
+
+.clear-btn {
+  font-size: 1.25rem;
+  color: var(--gray-400);
+  cursor: pointer;
+  transition: all 0.2s;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  font-weight: 300;
+}
+
+.clear-btn:hover {
+  color: var(--error-color);
+  background: var(--gray-100);
+  transform: scale(1.1);
+}
+
+.arrow-btn {
+  font-size: 0.875rem;
+  color: var(--gray-500);
+  transition: all 0.2s;
+  font-weight: 600;
+}
+
+.custom-select.active .arrow-btn {
+  transform: rotate(180deg);
+  color: var(--primary-600);
+}
+
+.custom-select.active .select-header {
+  border-color: var(--primary-500);
+  box-shadow: 0 0 0 3px rgb(16 185 129 / 0.1);
+}
+
+/* ===== БОЛЬШИЕ ВЫПАДАЮЩИЕ СПИСКИ ===== */
+.select-dropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background: var(--white);
+  border: 2px solid var(--gray-200);
+  border-radius: var(--radius-lg);
+  max-height: 320px;
+  overflow-y: auto;
+  z-index: 100;
+  box-shadow: var(--shadow-xl);
+  margin-top: 0.5rem;
+  display: none;
+  animation: dropdownSlide 0.2s ease-out;
+  padding: 0.5rem;
+}
+
+@keyframes dropdownSlide {
+  from {
+    opacity: 0;
+    transform: translateY(-12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Стилизация скроллбара */
+.select-dropdown::-webkit-scrollbar {
+  width: 6px;
+}
+
+.select-dropdown::-webkit-scrollbar-track {
+  background: var(--gray-100);
+  border-radius: 3px;
+}
+
+.select-dropdown::-webkit-scrollbar-thumb {
+  background: var(--gray-300);
+  border-radius: 3px;
+}
+
+.select-dropdown::-webkit-scrollbar-thumb:hover {
+  background: var(--gray-400);
+}
+
+.dropdown-item {
+  display: flex;
+  align-items: center;
+  padding: 1rem 1.25rem;
+  cursor: pointer;
+  border-radius: var(--radius);
+  transition: all 0.15s ease-in-out;
+  margin-bottom: 0.25rem;
+  border: 1px solid transparent;
+}
+
+.dropdown-item:hover {
+  background-color: var(--primary-50);
+  border-color: var(--primary-200);
+  transform: translateX(4px);
+}
+
+.dropdown-item:last-child {
+  margin-bottom: 0;
+}
+
+.dropdown-item input {
+  margin-right: 1rem;
+  width: 20px;
+  height: 20px;
+  accent-color: var(--primary-600);
+  flex-shrink: 0;
+}
+
+.dropdown-item label {
+  font-size: 1rem;
+  color: var(--gray-800);
+  cursor: pointer;
+  flex: 1;
+  font-weight: 500;
+  line-height: 1.4;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+/* Счетчик элементов в скобках */
+.dropdown-item label::after {
+  content: attr(data-count);
+  font-size: 0.875rem;
+  color: var(--gray-500);
+  font-weight: 400;
+  margin-left: 0.5rem;
+}
+
+/* Стиль для выбранных элементов */
+.dropdown-item input:checked + label {
+  color: var(--primary-700);
+  font-weight: 600;
+}
+
+.dropdown-item input:checked + label::after {
+  color: var(--primary-600);
+}
+
+/* ===== МОБИЛЬНЫЕ ВЫПАДАЮЩИЕ СПИСКИ В СТИЛЕ АВИТО ===== */
+.mobile-filter-options {
+  flex: 1;
+  overflow-y: auto;
+  padding: 0.5rem;
+}
+
+.mobile-filter-option {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1.125rem 1.25rem;
+  cursor: pointer;
+  transition: background-color 0.15s ease-in-out;
+  border-radius: var(--radius);
+  margin-bottom: 0.25rem;
+}
+
+.mobile-filter-option:hover {
+  background-color: var(--primary-50);
+}
+
+.mobile-filter-option input {
+  margin: 0;
+  width: 20px;
+  height: 20px;
+  accent-color: var(--primary-600);
+  flex-shrink: 0;
+}
+
+.mobile-filter-option label {
+  font-size: 1.0625rem;
+  color: var(--gray-800);
+  cursor: pointer;
+  flex: 1;
+  font-weight: 500;
+  line-height: 1.4;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.mobile-filter-option label::after {
+  content: attr(data-count);
+  font-size: 0.9375rem;
+  color: var(--gray-500);
+  font-weight: 400;
+  margin-left: 0.75rem;
+}
+
+/* ===== ОБНОВЛЕННЫЕ ФИЛЬТРЫ ДЛЯ МОБИЛЬНЫХ ===== */
+.filter-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.25rem 1.5rem;
+  border-bottom: 1px solid var(--gray-200);
+  cursor: pointer;
+  transition: all 0.15s ease-in-out;
+}
+
+.filter-item:hover {
+  background-color: var(--gray-50);
+}
+
+.filter-item:last-child {
+  border-bottom: none;
+}
+
+.filter-label {
+  font-family: 'Inter', sans-serif;
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: var(--gray-800);
+}
+
+.filter-value {
+  font-family: 'Inter', sans-serif;
+  font-size: 1rem;
+  color: var(--gray-600);
+  text-align: right;
+  flex: 1;
+  margin: 0 1rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: 500;
+}
+
+.filter-arrow {
+  font-family: 'Inter', sans-serif;
+  font-size: 1.125rem;
+  color: var(--gray-400);
+  transition: transform 0.2s ease-in-out;
+  font-weight: 300;
+}
+
+.filter-item:hover .filter-arrow {
+  color: var(--primary-500);
+  transform: translateX(3px);
+}
+
+/* ===== АДАПТИВНОСТЬ ДЛЯ БОЛЬШИХ ШРИФТОВ ===== */
+@media (max-width: 768px) {
+  .custom-select {
+    min-width: 100%;
+    max-width: 100%;
+  }
+  
+  .select-header {
+    padding: 1.125rem 1.5rem;
+    min-height: 60px;
+  }
+  
+  .select-header .selected-values {
+    font-size: 1.125rem;
+  }
+  
+  .select-dropdown {
+    position: fixed;
+    top: 50%;
+    left: 1rem;
+    right: 1rem;
+    transform: translateY(-50%);
+    max-height: 70vh;
+    border-radius: var(--radius-xl);
+    box-shadow: var(--shadow-2xl);
+  }
+  
+  .dropdown-item {
+    padding: 1.25rem 1.5rem;
+  }
+  
+  .dropdown-item label {
+    font-size: 1.125rem;
+  }
+  
+  .mobile-filter-option {
+    padding: 1.25rem 1.5rem;
+  }
+  
+  .mobile-filter-option label {
+    font-size: 1.125rem;
+  }
+}
+
+/* Улучшаем внешний вид при множественном выборе */
+.select-header .selected-values.multiple {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  white-space: normal;
+  line-height: 1.3;
+}
+
+/* Анимация появления счетчика */
+@keyframes countAppear {
+  from {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.dropdown-item label::after {
+  animation: countAppear 0.2s ease-out;
+}
