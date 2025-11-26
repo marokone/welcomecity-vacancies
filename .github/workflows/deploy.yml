@@ -1,0 +1,47 @@
+name: Deploy to GitHub Pages with Secrets
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:  # Позволяет запускать вручную
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        
+    - name: Replace Supabase Secrets in JS files
+      run: |
+        # Создаем временные файлы с подставленными секретами
+        sed "s|SUPABASE_URL_PLACEHOLDER|${{ secrets.SUPABASE_URL }}|g" js/main.js > js/main.temp.js
+        sed "s|SUPABASE_KEY_PLACEHOLDER|${{ secrets.SUPABASE_ANON_KEY }}|g" js/main.temp.js > js/main.prod.js
+        
+        sed "s|SUPABASE_URL_PLACEHOLDER|${{ secrets.SUPABASE_URL }}|g" js/fallback.js > js/fallback.temp.js
+        sed "s|SUPABASE_KEY_PLACEHOLDER|${{ secrets.SUPABASE_ANON_KEY }}|g" js/fallback.temp.js > js/fallback.prod.js
+        
+        # Заменяем оригинальные файлы
+        mv js/main.prod.js js/main.js
+        mv js/fallback.prod.js js/fallback.js
+        
+        # Удаляем временные файлы
+        rm -f js/main.temp.js js/fallback.temp.js
+        
+    - name: Minify JavaScript (optional)
+      run: |
+        npm install -g terser
+        terser js/main.js -o js/main.js -c -m
+        terser js/fallback.js -o js/fallback.js -c -m
+        
+    - name: Deploy to GitHub Pages
+      uses: peaceiris/actions-gh-pages@v3
+      with:
+        github_token: ${{ secrets.GITHUB_TOKEN }}
+        publish_dir: ./
