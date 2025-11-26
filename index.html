@@ -9,8 +9,6 @@
         .loader { text-align: center; padding: 40px; }
         .spinner { width: 40px; height: 40px; border: 4px solid #f3f3f3; border-top: 4px solid #048868; border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 20px; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-        .error { background: #ffe6e6; color: #d63031; padding: 20px; border-radius: 8px; margin: 20px 0; }
-        .success { background: #e8f5e8; color: #2d5016; padding: 20px; border-radius: 8px; margin: 20px 0; }
     </style>
 </head>
 <body>
@@ -27,226 +25,7 @@
         <div id="status" style="margin-top: 20px; padding: 15px; background: #f8f9fa; border-radius: 8px; font-family: monospace; font-size: 14px;"></div>
     </div>
 
-    <script>
-        // ВСТРАИВАЕМ ВСЕ МОДУЛИ ПРЯМО В HTML чтобы избежать проблем с путями
-        
-        // === МОДУЛЬ 1: config.js ===
-        const configModule = {
-            async init() {
-                console.log('⚙️ Инициализация конфигурации...');
-                
-                window.VACANCY_CONFIG = {
-                    supabase: {
-                        url: 'https://vhbiezamhpyejdqvvwuj.supabase.co',
-                        key: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZoYmllemFtaHB5ZWpkcXZ2d3VqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjE2Njc0MDgsImV4cCI6MjA3NzI0MzQwOH0.13h_XJ7kQFtuCjavkOXN9TzXNF2X4jX5-rcNCFiFqO0'
-                    },
-                    cache: {
-                        ttl: 5 * 60 * 1000,
-                        key: 'wc-vacancies-data'
-                    },
-                    selectors: {
-                        container: '#vacancy-app-container',
-                        loader: '#vacancy-app-loader'
-                    }
-                };
-                
-                console.log('✅ Конфигурация загружена');
-                return window.VACANCY_CONFIG;
-            }
-        };
-
-        // === МОДУЛЬ 2: utils.js ===
-        const utilsModule = {
-            async init() {
-                console.log('🛠️ Инициализация утилит...');
-                
-                window.vacancyUtils = {
-                    createElement: (tag, classes, content) => {
-                        const element = document.createElement(tag);
-                        if (classes) element.className = classes;
-                        if (content) element.innerHTML = content;
-                        return element;
-                    },
-                    
-                    showNotification: (message, type = 'info') => {
-                        const notification = document.createElement('div');
-                        notification.style.cssText = `
-                            position: fixed;
-                            top: 20px;
-                            right: 20px;
-                            padding: 12px 20px;
-                            border-radius: 8px;
-                            background: ${type === 'error' ? '#e74c3c' : '#048868'};
-                            color: white;
-                            z-index: 10000;
-                        `;
-                        notification.textContent = message;
-                        document.body.appendChild(notification);
-                        
-                        setTimeout(() => notification.remove(), 3000);
-                    }
-                };
-                
-                console.log('✅ Утилиты загружены');
-            }
-        };
-
-        // === МОДУЛЬ 3: supabase-client.js ===
-        const supabaseModule = {
-            async init() {
-                console.log('🔌 Инициализация Supabase...');
-                
-                if (!window.VACANCY_CONFIG) {
-                    throw new Error('Конфигурация не загружена');
-                }
-                
-                const { supabase } = window.VACANCY_CONFIG;
-                
-                if (!window.supabase) {
-                    throw new Error('Supabase JS library not loaded');
-                }
-                
-                window.supabaseClient = window.supabase.createClient(supabase.url, supabase.key);
-                console.log('✅ Supabase клиент создан');
-                return window.supabaseClient;
-            }
-        };
-
-        // === МОДУЛЬ 4: ui-components.js ===
-        const uiModule = {
-            async init() {
-                console.log('🎨 Инициализация UI компонентов...');
-                
-                const styles = `
-                    <style>
-                    .vacancy-container {
-                        max-width: 1200px;
-                        margin: 0 auto;
-                        padding: 40px 20px;
-                        font-family: Arial, sans-serif;
-                    }
-                    .search-wrapper {
-                        margin: 40px 0 20px;
-                    }
-                    #vacancy-search {
-                        width: 100%;
-                        padding: 20px;
-                        font-size: 18px;
-                        border: 2px solid #e0e0e0;
-                        border-radius: 8px;
-                    }
-                    .filters-row {
-                        display: flex;
-                        gap: 16px;
-                        margin: 30px 0;
-                    }
-                    .custom-select {
-                        flex: 1;
-                        position: relative;
-                    }
-                    .select-header {
-                        padding: 12px 16px;
-                        border: 2px solid #e0e0e0;
-                        border-radius: 8px;
-                        cursor: pointer;
-                    }
-                    .vacancy-card {
-                        padding: 20px;
-                        border: 1px solid #e0e0e0;
-                        border-radius: 8px;
-                        margin-bottom: 12px;
-                        cursor: pointer;
-                    }
-                    .vacancy-card:hover {
-                        border-color: #048868;
-                    }
-                    </style>
-                `;
-                
-                document.head.insertAdjacentHTML('beforeend', styles);
-                console.log('✅ Стили загружены');
-            }
-        };
-
-        // === МОДУЛЬ 5: filter-system.js ===
-        const filterModule = {
-            async init() {
-                console.log('🎛️ Инициализация системы фильтров...');
-                
-                const container = document.getElementById('vacancy-app-container');
-                if (container) {
-                    container.innerHTML = `
-                        <div class="vacancy-container">
-                            <h2 style="color: #048868;">✅ Все модули загружены успешно!</h2>
-                            <p>Система фильтров работает корректно.</p>
-                            
-                            <div class="search-wrapper">
-                                <input type="text" id="vacancy-search" placeholder="Поиск вакансий..." style="width: 100%; padding: 15px; font-size: 16px; border: 2px solid #e0e0e0; border-radius: 8px;">
-                            </div>
-                            
-                            <div class="filters-row">
-                                <div class="custom-select">
-                                    <div class="select-header">
-                                        <span>Все проекты</span>
-                                    </div>
-                                </div>
-                                <div class="custom-select">
-                                    <div class="select-header">
-                                        <span>Все подразделения</span>
-                                    </div>
-                                </div>
-                            </div>
-                            
-                            <div id="vacancy-results">
-                                <div class="vacancy-card">
-                                    <h3>Тестовая вакансия 1</h3>
-                                    <p>Проект А — Отдел разработки</p>
-                                </div>
-                                <div class="vacancy-card">
-                                    <h3>Тестовая вакансия 2</h3>
-                                    <p>Проект Б — Отдел маркетинга</p>
-                                </div>
-                            </div>
-                        </div>
-                    `;
-                }
-                
-                // Добавляем обработчики событий
-                const searchInput = document.getElementById('vacancy-search');
-                if (searchInput) {
-                    searchInput.addEventListener('input', function(e) {
-                        console.log('Поиск:', e.target.value);
-                    });
-                }
-                
-                const cards = document.querySelectorAll('.vacancy-card');
-                cards.forEach(card => {
-                    card.addEventListener('click', function() {
-                        alert('Клик по вакансии: ' + this.querySelector('h3').textContent);
-                    });
-                });
-                
-                console.log('✅ Система фильтров инициализирована');
-            }
-        };
-
-        // === МОДУЛЬ 6: main.js ===
-        const mainModule = {
-            async init() {
-                console.log('🎯 Главная инициализация приложения...');
-                
-                // Скрываем лоадер и показываем контент
-                const loader = document.getElementById('vacancy-app-loader');
-                const container = document.getElementById('vacancy-app-container');
-                
-                if (loader) loader.style.display = 'none';
-                if (container) container.style.display = 'block';
-                
-                console.log('✅ Приложение полностью загружено!');
-            }
-        };
-
-        // === ЗАГРУЗЧИК ПРИЛОЖЕНИЯ ===
+    <script type="module">
         const status = document.getElementById('status');
         
         function updateStatus(msg, isError = false) {
@@ -259,22 +38,29 @@
             updateStatus('🚀 Запуск приложения...');
             
             const modules = [
-                { name: 'config.js', module: configModule },
-                { name: 'utils.js', module: utilsModule },
-                { name: 'supabase-client.js', module: supabaseModule },
-                { name: 'ui-components.js', module: uiModule },
-                { name: 'filter-system.js', module: filterModule },
-                { name: 'main.js', module: mainModule }
+                './js/config.js',
+                './js/utils.js',
+                './js/supabase-client.js',
+                './js/ui-components.js', 
+                './js/filter-system.js',
+                './js/main.js'
             ];
             
-            for (const { name, module } of modules) {
+            for (const modulePath of modules) {
                 try {
-                    updateStatus(`📦 Загрузка: ${name}`);
-                    await module.init();
-                    updateStatus(`✅ Успешно: ${name}`);
+                    updateStatus(`📦 Загрузка: ${modulePath}`);
+                    
+                    // Загружаем модуль
+                    const module = await import(modulePath);
+                    
+                    // Инициализируем
+                    await module.default.init();
+                    
+                    updateStatus(`✅ Успешно: ${modulePath}`);
+                    
                 } catch (error) {
-                    updateStatus(`❌ Ошибка: ${name} - ${error.message}`, true);
-                    // Продолжаем загрузку даже при ошибках
+                    updateStatus(`❌ Ошибка: ${modulePath} - ${error.message}`, true);
+                    return; // Останавливаем при ошибке
                 }
             }
             
