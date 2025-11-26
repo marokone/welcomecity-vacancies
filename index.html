@@ -1,1 +1,196 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Welcome City - Вакансии</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .loader {
+            text-align: center;
+            padding: 40px;
+        }
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #048868;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .error {
+            background: #ffe6e6;
+            color: #d63031;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Welcome City - Тест вакансий</h1>
+        <p>Эта страница тестирует загрузку модулей из GitHub Pages</p>
+        
+        <div id="vacancy-app-loader" class="loader">
+            <div class="spinner"></div>
+            <p>Загружаем модули вакансий...</p>
+        </div>
+        
+        <div id="vacancy-app-container" style="display: none;">
+            <!-- Сюда загрузится приложение вакансий -->
+        </div>
+        
+        <div id="status-info" style="margin-top: 30px; padding: 15px; background: #f8f9fa; border-radius: 8px;"></div>
+    </div>
 
+    <script type="module">
+        // Конфигурация
+        const CONFIG = {
+            basePath: 'https://marokone.github.io/welcomecity-vacancies/js/',
+            modules: [
+                'config.js',
+                'utils.js', 
+                'supabase-client.js',
+                'ui-components.js',
+                'filter-system.js',
+                'main.js'
+            ]
+        };
+
+        // Элементы DOM
+        const loader = document.getElementById('vacancy-app-loader');
+        const container = document.getElementById('vacancy-app-container');
+        const statusInfo = document.getElementById('status-info');
+
+        // Функция для обновления статуса
+        function updateStatus(message, isError = false) {
+            console.log(message);
+            statusInfo.innerHTML = isError 
+                ? `<div style="color: #dc3545;">❌ ${message}</div>`
+                : `<div style="color: #28a745;">✅ ${message}</div>`;
+            
+            if (isError) {
+                statusInfo.style.background = '#ffe6e6';
+            }
+        }
+
+        // Функция загрузки модуля
+        async function loadModule(moduleName) {
+            try {
+                updateStatus(`Загрузка: ${moduleName}`);
+                
+                const moduleUrl = `${CONFIG.basePath}${moduleName}?v=${Date.now()}`;
+                console.log(`📦 Загружаем: ${moduleUrl}`);
+                
+                const module = await import(moduleUrl);
+                
+                if (module.default && typeof module.default.init === 'function') {
+                    await module.default.init();
+                    updateStatus(`Успешно: ${moduleName}`);
+                    return true;
+                } else {
+                    throw new Error('Модуль не имеет метода init');
+                }
+                
+            } catch (error) {
+                console.error(`❌ Ошибка в модуле ${moduleName}:`, error);
+                updateStatus(`Ошибка: ${moduleName} - ${error.message}`, true);
+                return false;
+            }
+        }
+
+        // Основная функция инициализации
+        async function initializeApp() {
+            updateStatus('Начало загрузки приложения...');
+            
+            try {
+                // Проверяем доступность Supabase
+                if (typeof window.supabase === 'undefined') {
+                    throw new Error('Библиотека Supabase не загружена');
+                }
+
+                // Загружаем модули последовательно
+                for (const moduleName of CONFIG.modules) {
+                    const success = await loadModule(moduleName);
+                    if (!success) {
+                        throw new Error(`Модуль ${moduleName} не загрузился`);
+                    }
+                }
+
+                // Проверяем что все загрузилось
+                if (window.VACANCY_CONFIG && window.vacancyUtils && window.supabaseClient) {
+                    updateStatus('🎉 Все модули успешно загружены! Приложение готово.');
+                    
+                    // Скрываем лоадер и показываем контент
+                    loader.style.display = 'none';
+                    container.style.display = 'block';
+                    
+                } else {
+                    throw new Error('Не все зависимости загружены');
+                }
+
+            } catch (error) {
+                console.error('💥 Критическая ошибка инициализации:', error);
+                updateStatus(`Критическая ошибка: ${error.message}`, true);
+                
+                loader.innerHTML = `
+                    <div style="color: #dc3545; text-align: center;">
+                        <div style="font-size: 48px; margin-bottom: 16px;">⚠️</div>
+                        <h3>Ошибка загрузки</h3>
+                        <p>${error.message}</p>
+                        <button onclick="location.reload()" style="
+                            margin-top: 15px;
+                            padding: 10px 20px;
+                            background: #dc3545;
+                            color: white;
+                            border: none;
+                            border-radius: 6px;
+                            cursor: pointer;
+                        ">Перезагрузить</button>
+                    </div>
+                `;
+            }
+        }
+
+        // Запускаем когда страница загружена
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initializeApp);
+        } else {
+            initializeApp();
+        }
+
+        // Добавляем глобальные функции для отладки
+        window.debugApp = {
+            reload: () => initializeApp(),
+            checkModules: () => {
+                return {
+                    VACANCY_CONFIG: !!window.VACANCY_CONFIG,
+                    vacancyUtils: !!window.vacancyUtils,
+                    supabaseClient: !!window.supabaseClient,
+                    filterSystem: !!window.filterSystem
+                };
+            }
+        };
+    </script>
+</body>
+</html>
