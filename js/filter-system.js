@@ -2,6 +2,26 @@
 export default {
     async init() {
         console.log('🎛️ Инициализация системы фильтров...');
+
+        handleVacancyClick(card) {
+    const key = decodeURIComponent(card.dataset.key);
+    const [title, project, department] = key.split('|');
+    const vacancy = this.vacancies.find(v => 
+        v.title === title && 
+        (v.project || '') === (project || '') && 
+        v.department === department
+    );
+    
+    if (vacancy) {
+        // Используем функцию из Tilda интеграции
+        if (window.showVacancyDetail) {
+            window.showVacancyDetail(vacancy);
+        } else {
+            // Fallback
+            alert(`Вакансия: ${vacancy.title}\nПроект: ${vacancy.project}\nОтдел: ${vacancy.department}`);
+        }
+    }
+}
         
         const container = document.getElementById('vacancy-app-container');
         if (container) {
