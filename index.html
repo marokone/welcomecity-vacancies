@@ -1,1 +1,20 @@
-
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Vacancies Test</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+    <div id="vacancy-app-loader">Loading...</div>
+    <div id="vacancy-app-container"></div>
+    
+    <script type="module">
+        import('./js/config.js').then(m => m.default.init());
+        import('./js/utils.js').then(m => m.default.init());
+        import('./js/supabase-client.js').then(m => m.default.init());
+        import('./js/ui-components.js').then(m => m.default.init());
+        import('./js/filter-system.js').then(m => m.default.init());
+        import('./js/main.js').then(m => m.default.init());
+    </script>
+</body>
+</html>
