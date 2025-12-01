@@ -747,7 +747,7 @@ class VacancyApp {
                 projValues.textContent = this.state.currentProject.join(', ');
                 projValues.classList.add('multiple');
             } else {
-                projValues.textContent = '';
+                projValues.textContent = 'Все проекты';
                 projValues.classList.remove('multiple');
             }
         }
@@ -772,7 +772,7 @@ class VacancyApp {
                 deptValues.textContent = this.state.currentDepartment.join(', ');
                 deptValues.classList.add('multiple');
             } else {
-                deptValues.textContent = '';
+                deptValues.textContent = 'Все подразделения';
                 deptValues.classList.remove('multiple');
             }
         }
