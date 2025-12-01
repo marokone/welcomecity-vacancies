@@ -1,4 +1,4 @@
-// Main Vacancy Application
+// Main Vacancy Application - AVITO STYLE
 class VacancyApp {
     constructor() {
         this.config = {
@@ -9,7 +9,7 @@ class VacancyApp {
                 data: 'wc-vacancies-data',
                 timestamp: 'wc-vacancies-timestamp'
             },
-            cacheTTL: 5 * 60 * 1000
+            cacheTTL: 5 * 60 * 1000 // 5 минут
         };
         
         this.state = {
@@ -20,25 +20,12 @@ class VacancyApp {
             currentVacancy: null,
             placeholderInterval: null,
             supabase: null,
-            realtimeSubscription: null
+            realtimeSubscription: null,
+            projectCounts: {},
+            deptCounts: {}
         };
         
         this.init();
-    }
-
-    initializeSupabase() {
-        if (window.supabase) {
-            // Используем credentials из конфига (уже подставленные GitHub Action)
-            this.state.supabase = window.supabase.createClient(
-                this.config.supabaseUrl, 
-                this.config.supabaseKey
-            );
-            console.log('✅ Supabase инициализирован');
-            return true;
-        } else {
-            console.error('❌ Supabase JS не загружен');
-            return false;
-        }
     }
 
     async init() {
@@ -133,6 +120,7 @@ class VacancyApp {
         ['project-filter', 'department-filter'].forEach(id => {
             const filter = document.getElementById(id);
             if (!filter) return;
+            
             const header = filter.querySelector('.select-header');
             const dropdown = filter.querySelector('.select-dropdown');
             const clearBtn = filter.querySelector('.clear-btn');
@@ -140,46 +128,75 @@ class VacancyApp {
             if (header) {
                 header.addEventListener('click', (e) => {
                     e.stopPropagation();
-                    const isOpen = dropdown.style.display === 'block';
+                    const isActive = filter.classList.contains('active');
                     
-                    document.querySelectorAll('.select-dropdown').forEach(dd => {
-                        if (dd !== dropdown) {
-                            dd.style.display = 'none';
-                            dd.parentElement.classList.remove('active');
+                    // Закрываем другие селекты
+                    document.querySelectorAll('.custom-select').forEach(s => {
+                        if (s !== filter) {
+                            s.classList.remove('active');
+                            const otherDropdown = s.querySelector('.select-dropdown');
+                            if (otherDropdown) otherDropdown.style.display = 'none';
                         }
                     });
                     
-                    dropdown.style.display = isOpen ? 'none' : 'block';
-                    filter.classList.toggle('active', !isOpen);
+                    // Переключаем текущий
+                    filter.classList.toggle('active');
+                    if (dropdown) {
+                        dropdown.style.display = isActive ? 'none' : 'block';
+                    }
                 });
             }
 
             if (clearBtn) {
                 clearBtn.addEventListener('click', (e) => {
                     e.stopPropagation();
-                    if (id === 'project-filter') this.state.currentProject = [];
-                    if (id === 'department-filter') this.state.currentDepartment = [];
+                    if (id === 'project-filter') {
+                        this.state.currentProject = [];
+                        filter.classList.remove('has-selection');
+                    }
+                    if (id === 'department-filter') {
+                        this.state.currentDepartment = [];
+                        filter.classList.remove('has-selection');
+                    }
                     this.renderFilters();
                     this.renderResults();
                 });
             }
 
+            // Обработка выбора опций
             if (dropdown) {
                 dropdown.addEventListener('change', (e) => {
                     if (e.target.type === 'checkbox') {
                         const value = e.target.value;
-                        e.stopPropagation();
+                        const isChecked = e.target.checked;
+                        
                         if (id === 'project-filter') {
-                            if (e.target.checked) {
-                                if (!this.state.currentProject.includes(value)) this.state.currentProject.push(value);
+                            if (isChecked) {
+                                if (!this.state.currentProject.includes(value)) {
+                                    this.state.currentProject.push(value);
+                                }
                             } else {
                                 this.state.currentProject = this.state.currentProject.filter(v => v !== value);
                             }
+                            // Обновляем класс has-selection
+                            if (this.state.currentProject.length > 0) {
+                                filter.classList.add('has-selection');
+                            } else {
+                                filter.classList.remove('has-selection');
+                            }
                         } else {
-                            if (e.target.checked) {
-                                if (!this.state.currentDepartment.includes(value)) this.state.currentDepartment.push(value);
+                            if (isChecked) {
+                                if (!this.state.currentDepartment.includes(value)) {
+                                    this.state.currentDepartment.push(value);
+                                }
                             } else {
                                 this.state.currentDepartment = this.state.currentDepartment.filter(v => v !== value);
+                            }
+                            // Обновляем класс has-selection
+                            if (this.state.currentDepartment.length > 0) {
+                                filter.classList.add('has-selection');
+                            } else {
+                                filter.classList.remove('has-selection');
                             }
                         }
                         this.renderFilters();
@@ -192,9 +209,10 @@ class VacancyApp {
         // Закрытие десктопных фильтров при клике вне
         document.addEventListener('click', (e) => {
             if (!e.target.closest('.custom-select')) {
-                document.querySelectorAll('.select-dropdown').forEach(dropdown => {
-                    dropdown.style.display = 'none';
-                    dropdown.parentElement.classList.remove('active');
+                document.querySelectorAll('.custom-select').forEach(select => {
+                    select.classList.remove('active');
+                    const dropdown = select.querySelector('.select-dropdown');
+                    if (dropdown) dropdown.style.display = 'none';
                 });
             }
         });
@@ -261,6 +279,13 @@ class VacancyApp {
             clearMobileFilters.addEventListener('click', () => {
                 this.state.currentProject = [];
                 this.state.currentDepartment = [];
+                
+                // Сбрасываем класс has-selection
+                const projectFilter = document.getElementById('project-filter');
+                const deptFilter = document.getElementById('department-filter');
+                if (projectFilter) projectFilter.classList.remove('has-selection');
+                if (deptFilter) deptFilter.classList.remove('has-selection');
+                
                 this.renderFilters();
                 this.renderResults();
                 this.updateMobileApplyButton();
@@ -321,6 +346,26 @@ class VacancyApp {
                     }
                 }
                 
+                // Обновляем класс has-selection для десктопной версии
+                const projectFilter = document.getElementById('project-filter');
+                const deptFilter = document.getElementById('department-filter');
+                
+                if (projectFilter) {
+                    if (this.state.currentProject.length > 0) {
+                        projectFilter.classList.add('has-selection');
+                    } else {
+                        projectFilter.classList.remove('has-selection');
+                    }
+                }
+                
+                if (deptFilter) {
+                    if (this.state.currentDepartment.length > 0) {
+                        deptFilter.classList.add('has-selection');
+                    } else {
+                        deptFilter.classList.remove('has-selection');
+                    }
+                }
+                
                 this.renderMobileFilters();
                 this.updateMobileApplyButton();
                 
@@ -335,6 +380,7 @@ class VacancyApp {
     // === SUPABASE И ДАННЫЕ ===
     initializeSupabase() {
         if (window.supabase) {
+            // Используем credentials из конфига (уже подставленные GitHub Action)
             this.state.supabase = window.supabase;
             console.log('✅ Supabase инициализирован');
             return true;
@@ -389,7 +435,8 @@ class VacancyApp {
         return {
             id: data.id,
             title: data.title || 'Без названия',
-            project: data.project || 'Без проекта',
+            project_name: data.project_name || 'Без проекта',
+            project: data.project || data.project_name || 'Без проекта',
             department: data.department || 'Без отдела',
             description: data.description || '',
             requirements: data.requirements || '',
@@ -431,6 +478,9 @@ class VacancyApp {
                 this.state.allVacancies = formattedVacancies;
                 this.saveToCache(this.state.allVacancies);
                 
+                // Пересчитываем счетчики
+                this.calculateCounts();
+                
                 if (currentCount > 0) {
                     console.log('🔄 Данные обновлены, перерисовываем интерфейс');
                     this.updateInterface();
@@ -456,6 +506,23 @@ class VacancyApp {
         }
         
         this.hideLoader();
+    }
+
+    // Подсчет количества вакансий по проектам и отделам
+    calculateCounts() {
+        // Счетчики проектов
+        this.state.projectCounts = {};
+        this.state.allVacancies.forEach(vacancy => {
+            const project = vacancy.project || 'Без проекта';
+            this.state.projectCounts[project] = (this.state.projectCounts[project] || 0) + 1;
+        });
+        
+        // Счетчики отделов
+        this.state.deptCounts = {};
+        this.state.allVacancies.forEach(vacancy => {
+            const dept = vacancy.department || 'Без отдела';
+            this.state.deptCounts[dept] = (this.state.deptCounts[dept] || 0) + 1;
+        });
     }
 
     startRealtimeSubscription() {
@@ -498,6 +565,7 @@ class VacancyApp {
                     const newVacancy = this.formatVacancyData(newData);
                     this.state.allVacancies.unshift(newVacancy);
                     this.saveToCache(this.state.allVacancies);
+                    this.calculateCounts(); // Пересчитываем счетчики
                     this.updateInterface();
                     this.showNotification('Добавлена новая вакансия', 'success');
                 }
@@ -512,6 +580,7 @@ class VacancyApp {
                         this.state.allVacancies.splice(index, 1);
                     }
                     this.saveToCache(this.state.allVacancies);
+                    this.calculateCounts(); // Пересчитываем счетчики
                     this.updateInterface();
                     this.showNotification('Вакансия обновлена', 'info');
                 }
@@ -522,6 +591,7 @@ class VacancyApp {
                 if (deleteIndex !== -1) {
                     this.state.allVacancies.splice(deleteIndex, 1);
                     this.saveToCache(this.state.allVacancies);
+                    this.calculateCounts(); // Пересчитываем счетчики
                     this.updateInterface();
                     this.showNotification('Вакансия удалена', 'info');
                 }
@@ -536,6 +606,7 @@ class VacancyApp {
             const cachedVacancies = this.getCachedData();
             if (cachedVacancies && cachedVacancies.length > 0) {
                 this.state.allVacancies = cachedVacancies;
+                this.calculateCounts(); // Подсчитываем счетчики для кэшированных данных
                 this.updateInterface();
                 this.hideLoader();
             }
@@ -549,6 +620,7 @@ class VacancyApp {
                 const cached = this.getCachedData();
                 if (cached && cached.length > 0) {
                     this.state.allVacancies = cached;
+                    this.calculateCounts(); // Подсчитываем счетчики
                     this.updateInterface();
                     this.showNotification('Используем кэшированные данные', 'info');
                 } else {
@@ -719,103 +791,133 @@ class VacancyApp {
     }
 
     renderFilters() {
-    console.log('🎛️ Rendering filters...');
-    
-    const projects = this.getAvailableProjects(this.state.currentDepartment);
-    const depts = this.getAvailableDepartments(this.state.currentProject);
-    
-    // Десктопные фильтры
-    const projDropdown = document.querySelector('#project-filter .select-dropdown');
-    const deptDropdown = document.querySelector('#department-filter .select-dropdown');
-    
-    if (projDropdown) {
-        projDropdown.innerHTML = Object.entries(projects)
-            .sort(([a], [b]) => a.localeCompare(b))
-            .map(([p, c]) => {
-                const checked = this.state.currentProject.includes(p) ? 'checked' : '';
-                return `
-                    <div class="dropdown-item">
-                        <input type="checkbox" value="${p}" ${checked}>
-                        <label data-count="(${c})">${p}</label>
-                    </div>
-                `;
-            }).join('');
+        console.log('🎛️ Rendering filters...');
         
-        const projValues = document.querySelector('#project-filter .selected-values');
-        if (projValues) {
-            if (this.state.currentProject.length > 0) {
-                projValues.textContent = this.state.currentProject.join(', ');
-                projValues.classList.add('multiple');
-            } else {
-                projValues.textContent = 'Все проекты';
-                projValues.classList.remove('multiple');
+        const projects = this.getAvailableProjects(this.state.currentDepartment);
+        const depts = this.getAvailableDepartments(this.state.currentProject);
+        
+        // Десктопные фильтры
+        const projectFilter = document.getElementById('project-filter');
+        const deptFilter = document.getElementById('department-filter');
+        
+        if (projectFilter) {
+            const projDropdown = projectFilter.querySelector('.select-dropdown');
+            const projValues = projectFilter.querySelector('.selected-values');
+            
+            if (projDropdown) {
+                projDropdown.innerHTML = Object.entries(projects)
+                    .sort(([a], [b]) => a.localeCompare(b))
+                    .map(([project, count]) => {
+                        const checked = this.state.currentProject.includes(project) ? 'checked' : '';
+                        return `
+                            <div class="select-option">
+                                <input type="checkbox" value="${project}" ${checked} id="proj-${project.replace(/\s+/g, '-')}">
+                                <label for="proj-${project.replace(/\s+/g, '-')}">
+                                    ${project} <span class="option-count">(${count})</span>
+                                </label>
+                            </div>
+                        `;
+                    }).join('');
+            }
+            
+            if (projValues) {
+                if (this.state.currentProject.length > 0) {
+                    projValues.textContent = this.state.currentProject.join(', ');
+                    projectFilter.classList.add('has-selection');
+                } else {
+                    projValues.textContent = 'Все проекты';
+                    projectFilter.classList.remove('has-selection');
+                }
             }
         }
-    }
-
-    if (deptDropdown) {
-        deptDropdown.innerHTML = Object.entries(depts)
-            .sort(([a], [b]) => a.localeCompare(b))
-            .map(([d, c]) => {
-                const checked = this.state.currentDepartment.includes(d) ? 'checked' : '';
-                return `
-                    <div class="dropdown-item">
-                        <input type="checkbox" value="${d}" ${checked}>
-                        <label data-count="(${c})">${d}</label>
-                    </div>
-                `;
-            }).join('');
         
-        const deptValues = document.querySelector('#department-filter .selected-values');
-        if (deptValues) {
-            if (this.state.currentDepartment.length > 0) {
-                deptValues.textContent = this.state.currentDepartment.join(', ');
-                deptValues.classList.add('multiple');
-            } else {
-                deptValues.textContent = 'Все подразделения';
-                deptValues.classList.remove('multiple');
+        if (deptFilter) {
+            const deptDropdown = deptFilter.querySelector('.select-dropdown');
+            const deptValues = deptFilter.querySelector('.selected-values');
+            
+            if (deptDropdown) {
+                deptDropdown.innerHTML = Object.entries(depts)
+                    .sort(([a], [b]) => a.localeCompare(b))
+                    .map(([dept, count]) => {
+                        const checked = this.state.currentDepartment.includes(dept) ? 'checked' : '';
+                        return `
+                            <div class="select-option">
+                                <input type="checkbox" value="${dept}" ${checked} id="dept-${dept.replace(/\s+/g, '-')}">
+                                <label for="dept-${dept.replace(/\s+/g, '-')}">
+                                    ${dept} <span class="option-count">(${count})</span>
+                                </label>
+                            </div>
+                        `;
+                    }).join('');
+            }
+            
+            if (deptValues) {
+                if (this.state.currentDepartment.length > 0) {
+                    deptValues.textContent = this.state.currentDepartment.join(', ');
+                    deptFilter.classList.add('has-selection');
+                } else {
+                    deptValues.textContent = 'Все подразделения';
+                    deptFilter.classList.remove('has-selection');
+                }
             }
         }
+        
+        this.renderMobileFilters();
+        this.updateResetButtonVisibility();
+        this.updateMobileApplyButton();
     }
-
-    this.renderMobileFilters();
-    this.updateResetButtonVisibility();
-    this.updateMobileApplyButton();
-}
 
     renderMobileFilters() {
         const projects = this.getAvailableProjects(this.state.currentDepartment);
         const depts = this.getAvailableDepartments(this.state.currentProject);
-
+        
         const projContainer = document.getElementById('mobile-project-options');
         if (projContainer) {
             projContainer.innerHTML = Object.entries(projects)
                 .sort(([a], [b]) => a.localeCompare(b))
-                .map(([p, c]) => {
-                    const checked = this.state.currentProject.includes(p) ? 'checked' : '';
-                    return `<label class="mobile-filter-option"><input type="checkbox" value="${p}" ${checked}> ${p} (${c})</label>`;
+                .map(([project, count]) => {
+                    const checked = this.state.currentProject.includes(project) ? 'checked' : '';
+                    const id = `mob-proj-${project.replace(/\s+/g, '-')}`;
+                    return `
+                        <label class="mobile-filter-option">
+                            <input type="checkbox" value="${project}" ${checked} id="${id}">
+                            <span>
+                                ${project} <span class="option-count">(${count})</span>
+                            </span>
+                        </label>
+                    `;
                 }).join('');
         }
-
+        
         const deptContainer = document.getElementById('mobile-dept-options');
         if (deptContainer) {
             deptContainer.innerHTML = Object.entries(depts)
                 .sort(([a], [b]) => a.localeCompare(b))
-                .map(([d, c]) => {
-                    const checked = this.state.currentDepartment.includes(d) ? 'checked' : '';
-                    return `<label class="mobile-filter-option"><input type="checkbox" value="${d}" ${checked}> ${d} (${c})</label>`;
+                .map(([dept, count]) => {
+                    const checked = this.state.currentDepartment.includes(dept) ? 'checked' : '';
+                    const id = `mob-dept-${dept.replace(/\s+/g, '-')}`;
+                    return `
+                        <label class="mobile-filter-option">
+                            <input type="checkbox" value="${dept}" ${checked} id="${id}">
+                            <span>
+                                ${dept} <span class="option-count">(${count})</span>
+                            </span>
+                        </label>
+                    `;
                 }).join('');
         }
-
+        
         // Обновляем значения в мобильном интерфейсе
         const projectValue = document.querySelector('.filter-item[data-type="projects"] .filter-value');
         const deptValue = document.querySelector('.filter-item[data-type="departments"] .filter-value');
         
         if (projectValue) {
-            projectValue.textContent = this.state.currentProject.length ? this.state.currentProject.join(', ') : 'Все проекты';
+            projectValue.textContent = this.state.currentProject.length ? 
+                this.state.currentProject.join(', ') : 'Все проекты';
         }
         if (deptValue) {
-            deptValue.textContent = this.state.currentDepartment.length ? this.state.currentDepartment.join(', ') : 'Все подразделения';
+            deptValue.textContent = this.state.currentDepartment.length ? 
+                this.state.currentDepartment.join(', ') : 'Все подразделения';
         }
     }
 
@@ -825,26 +927,28 @@ class VacancyApp {
             console.error('❌ Element #vacancy-results not found!');
             return;
         }
-
+        
         console.log('📄 Rendering results...');
         
         if (this.state.allVacancies.length === 0) {
             results.innerHTML = '<p style="text-align:center;color:#999;padding:40px 0;">Нет доступных вакансий</p>';
             return;
         }
-
+        
         const filtered = this.state.allVacancies.filter(vac => {
-            const byProject = this.state.currentProject.length === 0 || this.state.currentProject.includes(vac.project || 'Без проекта');
-            const byDept = this.state.currentDepartment.length === 0 || this.state.currentDepartment.includes(vac.department);
+            const byProject = this.state.currentProject.length === 0 || 
+                this.state.currentProject.includes(vac.project || 'Без проекта');
+            const byDept = this.state.currentDepartment.length === 0 || 
+                this.state.currentDepartment.includes(vac.department);
             const bySearch = this.state.currentQuery === '' || 
                 (vac.title && vac.title.toLowerCase().includes(this.state.currentQuery)) || 
                 (vac.description && vac.description.toLowerCase().includes(this.state.currentQuery));
             
             return byProject && byDept && bySearch;
         });
-
+        
         console.log(`Filtered vacancies: ${filtered.length} out of ${this.state.allVacancies.length}`);
-
+        
         if (filtered.length === 0) {
             results.innerHTML = `
                 <div style="text-align:center;color:#999;padding:40px 0;">
@@ -856,7 +960,7 @@ class VacancyApp {
             this.updateMobileApplyButton();
             return;
         }
-
+        
         // Группируем по отделам
         const groupedByDept = {};
         filtered.forEach(vac => {
@@ -864,7 +968,7 @@ class VacancyApp {
             if (!groupedByDept[dept]) groupedByDept[dept] = [];
             groupedByDept[dept].push(vac);
         });
-
+        
         const html = Object.keys(groupedByDept)
             .sort()
             .map(dept => {
@@ -893,7 +997,7 @@ class VacancyApp {
                 `;
             })
             .join('');
-
+        
         results.innerHTML = html;
         
         this.updateResetButtonVisibility();
@@ -901,7 +1005,9 @@ class VacancyApp {
     }
 
     updateResetButtonVisibility() {
-        const hasFilters = this.state.currentProject.length > 0 || this.state.currentDepartment.length > 0 || this.state.currentQuery.trim();
+        const hasFilters = this.state.currentProject.length > 0 || 
+                          this.state.currentDepartment.length > 0 || 
+                          this.state.currentQuery.trim();
         const resetBtn = document.getElementById('reset-all-filters');
         if (resetBtn) resetBtn.style.display = hasFilters ? 'block' : 'none';
     }
@@ -914,7 +1020,7 @@ class VacancyApp {
         
         if (hasFilters) {
             applyBtn.textContent = 'Показать';
-            applyBtn.style.background = '#048868';
+            applyBtn.style.background = '#007bff';
         } else {
             applyBtn.textContent = 'Отменить';
             applyBtn.style.background = '#666';
@@ -943,18 +1049,18 @@ class VacancyApp {
         
         this.state.currentVacancy = vacancy;
         window.scrollTo(0, 0);
-
+        
         // Скрыть список
         const vacancyContainer = document.querySelector('.vacancy-container');
         if (vacancyContainer) vacancyContainer.style.display = 'none';
-
+        
         // Скрыть верхние блоки
         const headerBlock = document.getElementById('rec1480064551');
         if (headerBlock) headerBlock.style.display = 'none';
-
+        
         const secondBlock = document.getElementById('rec1475773601');
         if (secondBlock) secondBlock.style.display = 'none';
-
+        
         // Показать детальные блоки
         const detailBlocks = [
             'rec1480130241',
@@ -974,12 +1080,12 @@ class VacancyApp {
                 foundAny = true;
             }
         });
-
+        
         if (!foundAny) {
             console.log('Ни один детальный блок не найден!');
             return;
         }
-
+        
         // Заполнить данные
         const titleEl = document.querySelector('.vacancy-title');
         if (titleEl) {
@@ -989,7 +1095,7 @@ class VacancyApp {
             titleEl.style.fontWeight = '700';
             titleEl.style.color = '#ffffff';
         }
-
+        
         const descEl = document.querySelector('.vacancy-description');
         if (descEl) descEl.innerHTML = vacancy.description || 'Не указано';
         
@@ -1001,12 +1107,12 @@ class VacancyApp {
         
         const condEl = document.querySelector('.vacancy-conditions');
         if (condEl) condEl.innerHTML = vacancy.conditions || 'Не указано';
-
+        
         // Обновляем аккордеон Tilda
         setTimeout(() => {
             this.updateTildaAccordion();
         }, 300);
-
+        
         // Обновить URL
         const newUrl = `${window.location.pathname}?vacancy=${encodeURIComponent(vacancy.title)}&project=${encodeURIComponent(vacancy.project || '')}&dept=${encodeURIComponent(vacancy.department)}`;
         history.pushState({ vacancy }, '', newUrl);
@@ -1025,7 +1131,7 @@ class VacancyApp {
             
             const searchInput = document.getElementById('vacancy-search');
             if (searchInput) searchInput.value = this.state.currentQuery;
-
+            
             this.renderFilters();
             
             const savedScroll = sessionStorage.getItem('vacancyListScroll');
@@ -1040,14 +1146,14 @@ class VacancyApp {
         } else {
             this.renderResults();
         }
-
+        
         // Показать верхние блоки
         const headerBlock = document.getElementById('rec1480064551');
         if (headerBlock) headerBlock.style.display = 'block';
-
+        
         const secondBlock = document.getElementById('rec1475773601');
         if (secondBlock) secondBlock.style.display = 'block';
-
+        
         // Скрыть детали
         const detailBlocks = [
             'rec1480130241',
@@ -1061,11 +1167,11 @@ class VacancyApp {
             const block = document.getElementById(id);
             if (block) block.style.display = 'none';
         });
-
+        
         // Показать список
         const vacancyContainer = document.querySelector('.vacancy-container');
         if (vacancyContainer) vacancyContainer.style.display = 'block';
-
+        
         history.pushState(null, '', window.location.pathname);
     }
 
