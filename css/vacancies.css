@@ -1012,3 +1012,367 @@
     transform: none !important;
   }
 }
+/* ============ AVITO STYLE OVERRIDES ============ */
+/* Добавьте это в самый конец файла */
+
+/* 1. ОБНОВЛЯЕМ КАСТОМНЫЕ СЕЛЕКТЫ */
+.custom-select {
+    border: 1px solid #e0e0e0 !important;
+    border-radius: 8px !important;
+    background: white !important;
+    transition: all 0.2s ease !important;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03) !important;
+}
+
+.custom-select:hover {
+    border-color: #b3b3b3 !important;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06) !important;
+}
+
+.custom-select.active {
+    border-color: #007bff !important;
+    box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.15) !important;
+}
+
+.select-header {
+    padding: 14px 16px !important;
+    min-height: 52px !important;
+}
+
+.select-header .selected-values {
+    font-size: 16px !important;
+    color: #333 !important;
+    font-weight: 400 !important;
+}
+
+.select-header .selected-values:empty::before {
+    color: #999 !important;
+}
+
+.select-controls {
+    display: flex;
+    gap: 10px !important;
+}
+
+.clear-btn {
+    font-size: 20px !important;
+    color: #999 !important;
+    width: 22px !important;
+    height: 22px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    border-radius: 50% !important;
+    background: #f5f5f5 !important;
+}
+
+.clear-btn:hover {
+    color: #ff4444 !important;
+    background: #ffe6e6 !important;
+}
+
+.arrow-btn {
+    color: #666 !important;
+    font-size: 12px !important;
+    font-weight: bold !important;
+}
+
+.select-dropdown {
+    border: 1px solid #e0e0e0 !important;
+    border-radius: 8px !important;
+    box-shadow: 0 6px 24px rgba(0, 0, 0, 0.12) !important;
+    background: white !important;
+    top: calc(100% + 4px) !important;
+    animation: avitoDropdown 0.2s ease-out !important;
+}
+
+@keyframes avitoDropdown {
+    from {
+        opacity: 0;
+        transform: translateY(-8px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.dropdown-item {
+    padding: 15px 20px !important;
+    font-size: 15px !important;
+    color: #333 !important;
+    border-bottom: 1px solid #f8f8f8 !important;
+}
+
+.dropdown-item:hover {
+    background: #f8fafc !important;
+}
+
+.dropdown-item.selected {
+    background: #f0f7ff !important;
+    color: #007bff !important;
+    font-weight: 500 !important;
+}
+
+.dropdown-item input[type="checkbox"] {
+    width: 18px !important;
+    height: 18px !important;
+    border: 1.5px solid #d0d0d0 !important;
+    border-radius: 4px !important;
+    margin-right: 12px !important;
+}
+
+.dropdown-item input[type="checkbox"]:checked {
+    background-color: #007bff !important;
+    border-color: #007bff !important;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='white'%3E%3Cpath d='M16.707 5.293a1 1 0 00-1.414 0L8 12.586 4.707 9.293a1 1 0 00-1.414 1.414l4 4a1 1 0 001.414 0l8-8a1 1 0 000-1.414z'/%3E%3C/svg%3E") !important;
+    background-position: center !important;
+    background-repeat: no-repeat !important;
+    background-size: 12px !important;
+}
+
+/* 2. ОБНОВЛЯЕМ МОБИЛЬНЫЕ ФИЛЬТРЫ */
+.filter-item {
+    border-bottom: 1px solid #f0f0f0 !important;
+    background: white !important;
+}
+
+.filter-item:hover {
+    background: #f8f9fa !important;
+}
+
+.filter-label {
+    font-size: 16px !important;
+    color: #333 !important;
+    font-weight: 500 !important;
+}
+
+.filter-value {
+    font-size: 16px !important;
+    color: #666 !important;
+}
+
+.filter-arrow {
+    color: #999 !important;
+}
+
+/* 3. ОБНОВЛЯЕМ МОБИЛЬНЫЕ ВЫПАДАЮЩИЕ СПИСКИ */
+.mobile-filter-dropdown {
+    background: white !important;
+}
+
+.dropdown-header {
+    border-bottom: 1px solid #f0f0f0 !important;
+    background: white !important;
+}
+
+.dropdown-header span:first-child {
+    font-size: 18px !important;
+    font-weight: 600 !important;
+    color: #1a1a1a !important;
+}
+
+.close-dropdown {
+    font-size: 24px !important;
+    color: #999 !important;
+    padding: 4px 8px !important;
+    border-radius: 4px !important;
+}
+
+.close-dropdown:hover {
+    color: #ff4444 !important;
+    background: #ffe6e6 !important;
+}
+
+.mobile-filter-option {
+    padding: 16px 20px !important;
+    font-size: 16px !important;
+    color: #1a1a1a !important;
+    border-bottom: 1px solid #f8f8f8 !important;
+}
+
+.mobile-filter-option:hover {
+    background: #f8f9fa !important;
+}
+
+.mobile-filter-option.selected {
+    background: #f0f7ff !important;
+    color: #007bff !important;
+    font-weight: 500 !important;
+}
+
+.mobile-filter-option input[type="checkbox"] {
+    width: 20px !important;
+    height: 20px !important;
+    border: 1.5px solid #d0d0d0 !important;
+    border-radius: 5px !important;
+    accent-color: #007bff !important;
+}
+
+/* 4. ОБНОВЛЯЕМ ФИЛЬТР РЯД */
+.filters-row {
+    gap: 16px !important;
+    margin: 24px 0 !important;
+}
+
+/* 5. СКРОЛЛБАР В СТИЛЕ AVITO */
+.select-dropdown::-webkit-scrollbar {
+    width: 6px;
+}
+
+.select-dropdown::-webkit-scrollbar-track {
+    background: #f8f8f8;
+    border-radius: 3px;
+}
+
+.select-dropdown::-webkit-scrollbar-thumb {
+    background: #d0d0d0;
+    border-radius: 3px;
+}
+
+.select-dropdown::-webkit-scrollbar-thumb:hover {
+    background: #b3b3b3;
+}
+
+/* 6. ОБНОВЛЯЕМ ПОИСКОВУЮ СТРОКУ */
+.search-input-container {
+    border: 1px solid #e0e0e0 !important;
+    border-radius: 8px !important;
+    padding-left: 16px !important;
+    background: white !important;
+}
+
+.search-input-container:focus-within {
+    border-color: #007bff !important;
+    box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.15) !important;
+}
+
+#vacancy-search {
+    border: none !important;
+    padding: 16px !important;
+    font-size: 16px !important;
+}
+
+#vacancy-search::placeholder {
+    color: #999 !important;
+}
+
+.search-icon {
+    left: 16px !important;
+    width: 20px !important;
+    height: 20px !important;
+}
+
+/* 7. МОБИЛЬНАЯ КНОПКА ФИЛЬТРОВ */
+.mobile-filters-btn {
+    border: 1px solid #e0e0e0 !important;
+    border-radius: 8px !important;
+    background: white !important;
+    padding: 14px 16px !important;
+    font-size: 16px !important;
+}
+
+.mobile-filters-btn:hover {
+    border-color: #b3b3b3 !important;
+}
+
+/* 8. МОДАЛЬНОЕ ОКНО */
+.mobile-filters-modal {
+    background: rgba(0, 0, 0, 0.5) !important;
+    backdrop-filter: blur(4px) !important;
+}
+
+.mobile-filters-content {
+    background: white !important;
+    border-radius: 20px 20px 0 0 !important;
+    box-shadow: 0 -8px 48px rgba(0, 0, 0, 0.18) !important;
+}
+
+.mobile-filters-header {
+    padding: 24px 20px 20px !important;
+    border-bottom: 1px solid #f0f0f0 !important;
+}
+
+.mobile-filters-header h3 {
+    font-size: 20px !important;
+    color: #1a1a1a !important;
+}
+
+/* 9. КНОПКА ПРИМЕНЕНИЯ */
+.apply-btn {
+    background: #007bff !important;
+    border-radius: 8px !important;
+    font-weight: 600 !important;
+}
+
+.apply-btn:hover {
+    background: #0056b3 !important;
+}
+
+/* 10. ИНДИКАТОР ВЫБРАННЫХ ЗНАЧЕНИЙ */
+.custom-select.has-selection .selected-values {
+    color: #1a1a1a !important;
+    font-weight: 500 !important;
+}
+
+.custom-select.has-selection {
+    border-color: #007bff !important;
+    background: #f8fafc !important;
+}
+
+/* 11. СОСТОЯНИЕ "НИЧЕГО НЕ ВЫБРАНО" */
+.custom-select:not(.has-selection) .selected-values {
+    color: #999 !important;
+}
+
+/* 12. КНОПКА СБРОСА ВСЕХ ФИЛЬТРОВ */
+.reset-btn {
+    border: 1px solid #e0e0e0 !important;
+    border-radius: 8px !important;
+    background: white !important;
+    color: #666 !important;
+    margin: 16px 0 !important;
+}
+
+.reset-btn:hover {
+    border-color: #ff4444 !important;
+    color: #ff4444 !important;
+    background: #fff5f5 !important;
+}
+
+/* 13. СТИЛЬ ДЛЯ ПУСТЫХ РЕЗУЛЬТАТОВ */
+#vacancy-results:empty::before {
+    color: #666 !important;
+    font-size: 16px !important;
+}
+
+/* 14. КЛАСС ДЛЯ JS - СЧЕТЧИК ВЫБРАННЫХ */
+.selected-count {
+    background: #007bff;
+    color: white;
+    font-size: 12px;
+    font-weight: 600;
+    padding: 2px 6px;
+    border-radius: 10px;
+    margin-left: 6px;
+}
+
+/* 15. АДАПТИВНОСТЬ */
+@media (max-width: 768px) {
+    .custom-select {
+        border-radius: 8px !important;
+        margin-bottom: 12px !important;
+    }
+    
+    .select-header {
+        padding: 14px 16px !important;
+    }
+    
+    .selected-values {
+        font-size: 15px !important;
+    }
+    
+    .search-input-container {
+        border-radius: 8px !important;
+    }
+}
