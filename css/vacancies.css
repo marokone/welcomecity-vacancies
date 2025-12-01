@@ -127,63 +127,66 @@
 .search-input-container {
   position: relative;
   width: 100%;
-  border: 1px solid var(--avito-border);
-  border-radius: 8px;
-  background: var(--background-white);
-  transition: all var(--transition-normal);
-  padding-left: 52px;
+  border: none !important;
+  border-radius: 0 !important;
+  padding-left: 0 !important;
+  background: transparent !important;
+  border-bottom: 1px solid #e0e0e0 !important;
+  margin-bottom: 8px !important;
+  transition: border-color var(--transition-normal);
 }
 
 .search-input-container:focus-within {
-  border-color: var(--avito-blue);
-  box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.1);
+  border-bottom-color: #333 !important;
+  box-shadow: none !important;
 }
 
 .search-icon {
   position: absolute;
-  left: 20px;
+  left: 12px !important;
   top: 50%;
   transform: translateY(-50%);
-  width: 20px;
-  height: 20px;
-  opacity: 0.5;
+  width: 20px !important;
+  height: 20px !important;
+  opacity: 0.5 !important;
   transition: opacity var(--transition-fast);
   pointer-events: none;
 }
 
 .search-input-container:focus-within .search-icon {
-  opacity: 0.8;
+  opacity: 0.8 !important;
 }
 
 #vacancy-search {
   width: 100%;
-  padding: 16px 20px;
-  font-size: var(--font-size-lg);
-  font-weight: 400;
+  padding: 16px 16px 16px 44px !important;
+  font-size: 20px !important;
+  font-weight: 400 !important;
   border: none;
   outline: none;
-  background: transparent;
-  color: var(--avito-text);
+  background: transparent !important;
+  color: #1a1a1a !important;
   line-height: 1.5;
   font-family: var(--font-family);
 }
 
 #vacancy-search::placeholder {
-  color: var(--avito-placeholder);
-  font-size: var(--font-size-lg);
-  font-weight: 300;
+  color: #999 !important;
+  font-size: 20px !important;
+  font-weight: 300 !important;
 }
 
 .search-hint {
-  margin-top: var(--spacing-sm);
-  font-size: var(--font-size-sm);
-  color: var(--text-gray);
+  margin-top: 4px !important;
+  font-size: 14px !important;
+  color: #666 !important;
   text-align: left;
-  font-style: italic;
+  font-style: normal !important;
   font-family: var(--font-family);
+  font-weight: 400 !important;
 }
 
-/* ===== ФИЛЬТРЫ В СТИЛЕ AVITO ===== */
+/* ===== ФИЛЬТРЫ В СТИЛЕ AVITO БЕЗ ПОДСВЕТОК ===== */
 .filters-row {
   display: flex;
   gap: var(--spacing-lg);
@@ -212,15 +215,16 @@
 }
 
 .custom-select.active {
-  border-color: var(--avito-blue);
-  box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.15);
+  border-color: #e0e0e0 !important;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03) !important;
 }
 
 .custom-select.has-selection {
-  border-color: var(--avito-blue);
-  background: var(--avito-blue-light);
+  border-color: #e0e0e0 !important;
+  background: white !important;
 }
 
+/* Header */
 .select-header {
   display: flex;
   align-items: center;
@@ -246,6 +250,11 @@
 
 .custom-select:not(.has-selection) .selected-values {
   color: var(--avito-placeholder);
+}
+
+.custom-select.has-selection .selected-values {
+  color: #333 !important;
+  font-weight: 500 !important;
 }
 
 .select-controls {
@@ -293,6 +302,7 @@
   transform: rotate(180deg);
 }
 
+/* Dropdown */
 .select-dropdown {
   position: absolute;
   top: calc(100% + 4px);
@@ -324,7 +334,7 @@
   display: block;
 }
 
-/* Унифицированный класс для опций (заменяет .dropdown-item и .select-option) */
+/* Options */
 .select-option {
   display: flex;
   align-items: center;
@@ -345,8 +355,9 @@
 }
 
 .select-option.selected {
-  background-color: var(--avito-gray-light);
-  font-weight: 500;
+  background-color: #f8f9fa !important;
+  color: #333 !important;
+  font-weight: 500 !important;
 }
 
 .select-option input[type="checkbox"] {
@@ -356,7 +367,12 @@
   border: 1.5px solid #d0d0d0;
   border-radius: 4px;
   cursor: pointer;
-  accent-color: var(--avito-blue);
+  accent-color: #333 !important;
+}
+
+.select-option input[type="checkbox"]:checked {
+  background-color: #333 !important;
+  border-color: #333 !important;
 }
 
 /* Счетчик в опциях */
@@ -369,7 +385,7 @@
 }
 
 .select-option.selected .option-count {
-  color: var(--avito-text);
+  color: #666 !important;
   opacity: 1;
 }
 
@@ -504,21 +520,31 @@
 
 .mobile-filters-btn {
   width: 100%;
-  padding: var(--spacing-md) var(--spacing-lg);
-  border: 1px solid var(--avito-border);
-  border-radius: 8px;
-  background: var(--background-white);
+  padding: 14px 20px !important;
+  border: 1px solid #e0e0e0 !important;
+  border-radius: 8px !important;
+  background: white !important;
   font-family: var(--font-family);
-  font-size: var(--font-size-base);
-  font-weight: 500;
-  color: var(--text-dark);
+  font-size: 16px !important;
+  font-weight: 500 !important;
+  color: #333 !important;
   cursor: pointer;
-  text-align: center;
-  transition: all var(--transition-fast);
+  text-align: left;
+  transition: all 0.2s !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
 }
 
 .mobile-filters-btn:hover {
-  border-color: #b3b3b3;
+  border-color: #b3b3b3 !important;
+  background: #f8f9fa !important;
+}
+
+.mobile-filters-btn::after {
+  content: "☰";
+  font-size: 18px;
+  color: #666;
 }
 
 .mobile-filters-modal {
@@ -579,11 +605,25 @@
   font-family: var(--font-family);
   font-size: var(--font-size-sm);
   font-weight: 500;
-  color: var(--avito-blue);
+  color: var(--primary-color);
   cursor: pointer;
   padding: var(--spacing-xs) var(--spacing-sm);
   border-radius: 4px;
   transition: background-color var(--transition-fast);
+  opacity: 0.5;
+  pointer-events: none;
+  visibility: hidden;
+}
+
+.mobile-filters-header:has(~ .mobile-filter-list .filter-item:not(.has-selection)) .filter-clear-btn {
+  opacity: 0 !important;
+  visibility: hidden !important;
+}
+
+.filter-clear-btn.visible {
+  opacity: 1 !important;
+  pointer-events: auto !important;
+  visibility: visible !important;
 }
 
 .filter-clear-btn:hover {
@@ -640,7 +680,7 @@
 }
 
 .filter-item:hover .filter-arrow {
-  color: var(--avito-blue);
+  color: var(--primary-color);
   transform: translateX(2px);
 }
 
@@ -709,6 +749,9 @@
   cursor: pointer;
   transition: background-color var(--transition-fast);
   border-bottom: 1px solid var(--border-light);
+  font-family: 'ALSHaussNext', sans-serif !important;
+  font-size: 16px !important;
+  color: #333 !important;
 }
 
 .mobile-filter-option:last-child {
@@ -720,15 +763,16 @@
 }
 
 .mobile-filter-option.selected {
-  background-color: var(--avito-gray-light);
-  font-weight: 500;
+  background-color: #f8f9fa !important;
+  color: #333 !important;
+  font-weight: 500 !important;
 }
 
 .mobile-filter-option input[type="checkbox"] {
   margin: 0;
   width: 18px;
   height: 18px;
-  accent-color: var(--avito-blue);
+  accent-color: #333 !important;
 }
 
 .mobile-filter-option label {
@@ -751,17 +795,17 @@
   padding: var(--spacing-lg);
   border: none;
   border-radius: 8px;
-  background: var(--avito-blue);
+  background: #048868 !important;
   font-family: var(--font-family);
-  font-size: var(--font-size-base);
-  font-weight: 600;
+  font-size: 16px !important;
+  font-weight: 600 !important;
   color: white;
   cursor: pointer;
   transition: all var(--transition-normal);
 }
 
 .apply-btn:hover {
-  background: #0056b3;
+  background: #036b50 !important;
   transform: translateY(-1px);
 }
 
@@ -993,22 +1037,26 @@
   }
 
   .search-input-container {
-    padding-left: 48px;
+    border-bottom-width: 1px !important;
   }
 
   .search-icon {
-    left: 16px;
-    width: 18px;
-    height: 18px;
+    left: 10px !important;
+    width: 18px !important;
+    height: 18px !important;
   }
 
   #vacancy-search {
-    font-size: var(--font-size-base);
-    padding: 14px 16px;
+    font-size: 18px !important;
+    padding: 14px 14px 14px 40px !important;
   }
 
   #vacancy-search::placeholder {
-    font-size: var(--font-size-base);
+    font-size: 18px !important;
+  }
+
+  .search-hint {
+    font-size: 13px !important;
   }
 
   .vacancy-card {
@@ -1031,6 +1079,11 @@
   .custom-select {
     min-width: 100%;
     max-width: 100%;
+  }
+
+  .mobile-filters-btn {
+    padding: 12px 16px !important;
+    font-size: 15px !important;
   }
 
   .vacancy-title {
@@ -1074,22 +1127,26 @@
 
 @media (max-width: 480px) {
   #vacancy-search {
-    font-size: var(--font-size-sm);
-    padding: 12px 14px;
+    font-size: 16px !important;
+    padding: 12px 12px 12px 36px !important;
   }
 
   #vacancy-search::placeholder {
-    font-size: var(--font-size-sm);
+    font-size: 16px !important;
   }
 
   .search-icon {
-    width: 16px;
-    height: 16px;
-    left: 14px;
+    width: 16px !important;
+    height: 16px !important;
+    left: 8px !important;
   }
 
   .search-input-container {
-    padding-left: 42px;
+    padding-left: 0 !important;
+  }
+
+  .search-hint {
+    font-size: 12px !important;
   }
 
   .mobile-filters-header,
