@@ -13,6 +13,14 @@
   --background-gray: #f8f9fa;
   --error-color: #e74c3c;
 
+  /* Avito-style colors */
+  --avito-blue: #007bff;
+  --avito-blue-light: #f0f7ff;
+  --avito-gray-light: #f8f9fa;
+  --avito-border: #e0e0e0;
+  --avito-text: #333;
+  --avito-placeholder: #999;
+
   /* Типографика */
   --font-family: 'ALSHaussNext', sans-serif;
   --font-size-xs: 13px;
@@ -38,6 +46,7 @@
   /* Тени */
   --shadow-sm: 0 4px 12px rgba(0, 0, 0, 0.1);
   --shadow-md: 0 -4px 20px rgba(0, 0, 0, 0.15);
+  --shadow-lg: 0 6px 24px rgba(0, 0, 0, 0.12);
 
   /* Анимации */
   --transition-fast: 0.2s ease;
@@ -48,7 +57,6 @@
 /* ===== БАЗОВЫЕ СТИЛИ ===== */
 * {
   box-sizing: border-box;
-  transition: all var(--transition-fast);
 }
 
 /* ===== ФИКСЫ ДЛЯ TILDA ===== */
@@ -110,7 +118,7 @@
   padding-top: 0;
 }
 
-/* ===== КОМПОНЕНТ ПОИСКА ===== */
+/* ===== ПОИСК В СТИЛЕ AVITO ===== */
 .search-wrapper {
   width: 100%;
   margin: var(--spacing-4xl) 0 var(--spacing-xl);
@@ -119,45 +127,55 @@
 .search-input-container {
   position: relative;
   width: 100%;
-  border-bottom: 1px solid var(--border-color);
-  transition: border-color var(--transition-normal);
+  border: 1px solid var(--avito-border);
+  border-radius: 8px;
+  background: var(--background-white);
+  transition: all var(--transition-normal);
+  padding-left: 52px;
 }
 
 .search-input-container:focus-within {
-  border-bottom-color: var(--primary-color);
+  border-color: var(--avito-blue);
+  box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.1);
 }
 
 .search-icon {
   position: absolute;
-  left: 0;
+  left: 20px;
   top: 50%;
   transform: translateY(-50%);
-  width: 32px;
-  height: 32px;
+  width: 20px;
+  height: 20px;
+  opacity: 0.5;
+  transition: opacity var(--transition-fast);
   pointer-events: none;
-  opacity: 0.7;
+}
+
+.search-input-container:focus-within .search-icon {
+  opacity: 0.8;
 }
 
 #vacancy-search {
   width: 100%;
-  padding: var(--spacing-xl) var(--spacing-xl) var(--spacing-xl) 48px;
-  font-size: var(--font-size-3xl);
+  padding: 16px 20px;
+  font-size: var(--font-size-lg);
   font-weight: 400;
   border: none;
   outline: none;
   background: transparent;
-  color: var(--text-dark);
-  line-height: 1.2;
+  color: var(--avito-text);
+  line-height: 1.5;
   font-family: var(--font-family);
 }
 
 #vacancy-search::placeholder {
-  color: #ccc;
+  color: var(--avito-placeholder);
+  font-size: var(--font-size-lg);
   font-weight: 300;
 }
 
 .search-hint {
-  margin-top: var(--spacing-md);
+  margin-top: var(--spacing-sm);
   font-size: var(--font-size-sm);
   color: var(--text-gray);
   text-align: left;
@@ -165,7 +183,7 @@
   font-family: var(--font-family);
 }
 
-/* ===== КОМПОНЕНТ ФИЛЬТРОВ ===== */
+/* ===== ФИЛЬТРЫ В СТИЛЕ AVITO ===== */
 .filters-row {
   display: flex;
   gap: var(--spacing-lg);
@@ -177,24 +195,42 @@
   position: relative;
   font-family: var(--font-family);
   flex: 1;
-  min-width: 200px;
+  min-width: 280px;
+  max-width: 350px;
+  background: var(--background-white);
+  border: 1px solid var(--avito-border);
+  border-radius: 8px;
+  cursor: pointer;
+  user-select: none;
+  transition: all var(--transition-normal);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
+}
+
+.custom-select:hover {
+  border-color: #b3b3b3;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+.custom-select.active {
+  border-color: var(--avito-blue);
+  box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.15);
+}
+
+.custom-select.has-selection {
+  border-color: var(--avito-blue);
+  background: var(--avito-blue-light);
 }
 
 .select-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: var(--spacing-md) 0;
+  padding: 14px 16px;
+  min-height: 52px;
   border: none;
-  border-bottom: 1px solid var(--border-color);
   background: transparent;
   cursor: pointer;
-  transition: border-color var(--transition-normal);
-  border-radius: 0;
-}
-
-.select-header:hover {
-  border-bottom-color: var(--primary-color);
+  border-radius: 8px;
 }
 
 .select-header .selected-values {
@@ -203,29 +239,54 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  font-size: var(--font-size-sm);
-  color: var(--text-dark);
+  font-size: var(--font-size-base);
+  color: var(--avito-text);
+  font-weight: 400;
+}
+
+.custom-select:not(.has-selection) .selected-values {
+  color: var(--avito-placeholder);
 }
 
 .select-controls {
   display: flex;
-  gap: var(--spacing-sm);
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
 }
 
-.clear-btn,
-.arrow-btn {
-  font-size: var(--font-size-base);
-  color: var(--text-light);
+.clear-btn {
+  font-size: 20px;
+  color: var(--avito-placeholder);
   cursor: pointer;
-  transition: color var(--transition-normal);
+  transition: all var(--transition-fast);
+  width: 22px;
+  height: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: #f5f5f5;
+  opacity: 0;
+  transform: scale(0.8);
+}
+
+.custom-select.has-selection .clear-btn {
+  opacity: 1;
+  transform: scale(1);
 }
 
 .clear-btn:hover {
   color: var(--error-color);
+  background: #ffe6e6;
 }
 
 .arrow-btn {
+  font-size: 12px;
+  color: #666;
+  cursor: pointer;
   transition: transform var(--transition-normal);
+  font-weight: bold;
 }
 
 .custom-select.active .arrow-btn {
@@ -234,39 +295,82 @@
 
 .select-dropdown {
   position: absolute;
-  top: 100%;
+  top: calc(100% + 4px);
   left: 0;
   right: 0;
   background: var(--background-white);
-  border: 1px solid var(--primary-color);
-  border-top: none;
-  border-radius: 0 0 8px 8px;
-  max-height: 200px;
+  border: 1px solid var(--avito-border);
+  border-radius: 8px;
+  max-height: 320px;
   overflow-y: auto;
   z-index: 100;
-  box-shadow: var(--shadow-sm);
+  box-shadow: var(--shadow-lg);
   display: none;
+  animation: dropdownSlide 0.2s ease-out;
 }
 
-.dropdown-item {
+@keyframes dropdownSlide {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.custom-select.active .select-dropdown {
+  display: block;
+}
+
+/* Унифицированный класс для опций (заменяет .dropdown-item и .select-option) */
+.select-option {
   display: flex;
   align-items: center;
-  padding: var(--spacing-md) var(--spacing-lg);
+  padding: 14px 16px;
   cursor: pointer;
   border-bottom: 1px solid var(--border-light);
   transition: background-color var(--transition-fast);
+  font-size: var(--font-size-sm);
+  color: var(--avito-text);
 }
 
-.dropdown-item:hover {
-  background-color: var(--background-gray);
-}
-
-.dropdown-item:last-child {
+.select-option:last-child {
   border-bottom: none;
 }
 
-.dropdown-item input {
+.select-option:hover {
+  background-color: var(--avito-gray-light);
+}
+
+.select-option.selected {
+  background-color: var(--avito-gray-light);
+  font-weight: 500;
+}
+
+.select-option input[type="checkbox"] {
   margin-right: var(--spacing-md);
+  width: 18px;
+  height: 18px;
+  border: 1.5px solid #d0d0d0;
+  border-radius: 4px;
+  cursor: pointer;
+  accent-color: var(--avito-blue);
+}
+
+/* Счетчик в опциях */
+.option-count {
+  color: var(--text-gray);
+  font-size: var(--font-size-xs);
+  font-weight: normal;
+  margin-left: var(--spacing-xs);
+  opacity: 0.7;
+}
+
+.select-option.selected .option-count {
+  color: var(--avito-text);
+  opacity: 1;
 }
 
 /* ===== КАРТОЧКИ ВАКАНСИЙ ===== */
@@ -280,19 +384,19 @@
   align-items: center;
   background: var(--background-white);
   padding: var(--spacing-xl);
-  border: none; /* Убираем все границы */
-  border-radius: 0; /* Убираем скругления */
+  border: none;
+  border-radius: 0;
   cursor: pointer;
   transition: all var(--transition-normal);
   position: relative;
   overflow: hidden;
-  border-bottom: 1px solid var(--border-light); /* Только нижняя граница */
+  border-bottom: 1px solid var(--border-light);
 }
 
 .vacancy-card::before {
   content: '';
   position: absolute;
-  left: -8px; /* Начинается за пределами карточки */
+  left: -8px;
   top: 0;
   height: 100%;
   width: 4px;
@@ -302,26 +406,25 @@
 }
 
 .vacancy-card:hover {
-  transform: translateX(8px); /* Сдвиг вправо */
-  border-bottom-color: var(--primary-color); /* Подсветка нижней границы */
+  transform: translateX(8px);
+  border-bottom-color: var(--primary-color);
 }
 
 .vacancy-card:hover::before {
-  transform: scaleX(1); /* Появляется слева */
+  transform: scaleX(1);
 }
 
-/* Стрелочка слева */
 .arrow-icon {
   font-size: var(--font-size-lg);
   color: var(--text-light);
   margin-left: var(--spacing-md);
   flex-shrink: 0;
   transition: all var(--transition-normal);
-  opacity: 0; /* Изначально скрыта */
+  opacity: 0;
 }
 
 .vacancy-card:hover .arrow-icon {
-  opacity: 1; /* Появляется при ховере */
+  opacity: 1;
   color: var(--primary-color);
 }
 
@@ -345,8 +448,8 @@
 .reset-btn {
   width: 100%;
   padding: var(--spacing-md) var(--spacing-xl);
-  border: 1px solid var(--border-color);
-  border-radius: 6px;
+  border: 1px solid var(--avito-border);
+  border-radius: 8px;
   background: var(--background-white);
   font-family: var(--font-family);
   font-size: var(--font-size-base);
@@ -354,12 +457,13 @@
   cursor: pointer;
   text-align: center;
   transition: all var(--transition-normal);
-  margin-bottom: var(--spacing-xl);
+  margin: var(--spacing-lg) 0;
 }
 
 .reset-btn:hover {
-  border-color: var(--primary-color);
-  color: var(--primary-color);
+  border-color: var(--error-color);
+  color: var(--error-color);
+  background: #fff5f5;
 }
 
 /* ===== ЗАГРУЗЧИК ===== */
@@ -392,7 +496,7 @@
   50% { transform: scale(1.05); }
 }
 
-/* ===== МОБИЛЬНЫЕ ФИЛЬТРЫ ===== */
+/* ===== МОБИЛЬНЫЕ ФИЛЬТРЫ В СТИЛЕ AVITO ===== */
 .mobile-filters-container {
   display: none;
   margin-bottom: var(--spacing-xl);
@@ -401,7 +505,7 @@
 .mobile-filters-btn {
   width: 100%;
   padding: var(--spacing-md) var(--spacing-lg);
-  border: 1px solid var(--border-color);
+  border: 1px solid var(--avito-border);
   border-radius: 8px;
   background: var(--background-white);
   font-family: var(--font-family);
@@ -414,8 +518,7 @@
 }
 
 .mobile-filters-btn:hover {
-  border-color: var(--primary-color);
-  color: var(--primary-color);
+  border-color: #b3b3b3;
 }
 
 .mobile-filters-modal {
@@ -440,11 +543,12 @@
   left: 0;
   right: 0;
   background: var(--background-white);
-  border-radius: 16px 16px 0 0;
+  border-radius: 20px 20px 0 0;
   max-height: 85vh;
   overflow: hidden;
   transform: translateY(100%);
   transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 -8px 48px rgba(0, 0, 0, 0.18);
 }
 
 .mobile-filters-modal.active .mobile-filters-content {
@@ -455,17 +559,18 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: var(--spacing-xl);
+  padding: 24px 20px 20px;
   border-bottom: 1px solid var(--border-light);
   background: var(--background-white);
+  border-radius: 20px 20px 0 0;
 }
 
 .mobile-filters-header h3 {
   margin: 0;
   font-family: var(--font-family);
-  font-size: var(--font-size-xl);
+  font-size: 20px;
   font-weight: 600;
-  color: var(--text-dark);
+  color: var(--avito-text);
 }
 
 .filter-clear-btn {
@@ -474,7 +579,7 @@
   font-family: var(--font-family);
   font-size: var(--font-size-sm);
   font-weight: 500;
-  color: var(--primary-color);
+  color: var(--avito-blue);
   cursor: pointer;
   padding: var(--spacing-xs) var(--spacing-sm);
   border-radius: 4px;
@@ -482,7 +587,7 @@
 }
 
 .filter-clear-btn:hover {
-  background-color: var(--background-gray);
+  background-color: var(--avito-gray-light);
 }
 
 .mobile-filter-list {
@@ -497,10 +602,11 @@
   border-bottom: 1px solid var(--border-light);
   cursor: pointer;
   transition: background-color var(--transition-fast);
+  background: white;
 }
 
 .filter-item:hover {
-  background-color: var(--background-gray);
+  background-color: var(--avito-gray-light);
 }
 
 .filter-item:last-child {
@@ -511,7 +617,7 @@
   font-family: var(--font-family);
   font-size: var(--font-size-base);
   font-weight: 500;
-  color: var(--text-dark);
+  color: var(--avito-text);
 }
 
 .filter-value {
@@ -534,7 +640,7 @@
 }
 
 .filter-item:hover .filter-arrow {
-  color: var(--primary-color);
+  color: var(--avito-blue);
   transform: translateX(2px);
 }
 
@@ -568,7 +674,7 @@
   font-family: var(--font-family);
   font-size: var(--font-size-lg);
   font-weight: 600;
-  color: var(--text-dark);
+  color: var(--avito-text);
 }
 
 .close-dropdown {
@@ -581,10 +687,12 @@
   padding: var(--spacing-xs);
   line-height: 1;
   transition: color var(--transition-fast);
+  border-radius: 4px;
 }
 
 .close-dropdown:hover {
-  color: var(--text-dark);
+  color: var(--error-color);
+  background: #ffe6e6;
 }
 
 .mobile-filter-options {
@@ -600,23 +708,33 @@
   padding: var(--spacing-md) var(--spacing-xl);
   cursor: pointer;
   transition: background-color var(--transition-fast);
+  border-bottom: 1px solid var(--border-light);
+}
+
+.mobile-filter-option:last-child {
+  border-bottom: none;
 }
 
 .mobile-filter-option:hover {
-  background-color: var(--background-gray);
+  background-color: var(--avito-gray-light);
 }
 
-.mobile-filter-option input {
+.mobile-filter-option.selected {
+  background-color: var(--avito-gray-light);
+  font-weight: 500;
+}
+
+.mobile-filter-option input[type="checkbox"] {
   margin: 0;
   width: 18px;
   height: 18px;
-  accent-color: var(--primary-color);
+  accent-color: var(--avito-blue);
 }
 
 .mobile-filter-option label {
   font-family: var(--font-family);
   font-size: var(--font-size-base);
-  color: var(--text-dark);
+  color: var(--avito-text);
   cursor: pointer;
   flex: 1;
 }
@@ -632,8 +750,8 @@
   width: 100%;
   padding: var(--spacing-lg);
   border: none;
-  border-radius: 12px;
-  background: var(--primary-color);
+  border-radius: 8px;
+  background: var(--avito-blue);
   font-family: var(--font-family);
   font-size: var(--font-size-base);
   font-weight: 600;
@@ -643,7 +761,7 @@
 }
 
 .apply-btn:hover {
-  background: var(--primary-hover);
+  background: #0056b3;
   transform: translateY(-1px);
 }
 
@@ -651,36 +769,27 @@
   transform: translateY(0);
 }
 
-/* Адаптивность мобильных фильтров */
-@media (max-width: 480px) {
-  .mobile-filters-header,
-  .dropdown-header {
-    padding: var(--spacing-lg);
-  }
-  
-  .filter-item {
-    padding: var(--spacing-md) var(--spacing-lg);
-  }
-  
-  .mobile-filter-option {
-    padding: var(--spacing-md) var(--spacing-lg);
-  }
-  
-  .mobile-filters-actions {
-    padding: var(--spacing-lg);
-  }
+/* ===== СКРОЛЛБАР В СТИЛЕ AVITO ===== */
+.select-dropdown::-webkit-scrollbar,
+.mobile-filter-options::-webkit-scrollbar {
+  width: 6px;
 }
 
-@media (max-width: 360px) {
-  .mobile-filters-header h3 {
-    font-size: var(--font-size-lg);
-  }
-  
-  .filter-label,
-  .filter-value,
-  .mobile-filter-option label {
-    font-size: var(--font-size-sm);
-  }
+.select-dropdown::-webkit-scrollbar-track,
+.mobile-filter-options::-webkit-scrollbar-track {
+  background: #f8f8f8;
+  border-radius: 3px;
+}
+
+.select-dropdown::-webkit-scrollbar-thumb,
+.mobile-filter-options::-webkit-scrollbar-thumb {
+  background: #d0d0d0;
+  border-radius: 3px;
+}
+
+.select-dropdown::-webkit-scrollbar-thumb:hover,
+.mobile-filter-options::-webkit-scrollbar-thumb:hover {
+  background: #b3b3b3;
 }
 
 /* ===== СТИЛИ ДЕТАЛЬНОЙ СТРАНИЦЫ ===== */
@@ -883,14 +992,23 @@
     display: block !important;
   }
 
-  #vacancy-search {
-    font-size: var(--font-size-2xl);
-    padding: var(--spacing-lg) var(--spacing-lg) var(--spacing-lg) 44px;
+  .search-input-container {
+    padding-left: 48px;
   }
 
   .search-icon {
-    width: 28px;
-    height: 28px;
+    left: 16px;
+    width: 18px;
+    height: 18px;
+  }
+
+  #vacancy-search {
+    font-size: var(--font-size-base);
+    padding: 14px 16px;
+  }
+
+  #vacancy-search::placeholder {
+    font-size: var(--font-size-base);
   }
 
   .vacancy-card {
@@ -908,6 +1026,11 @@
   .department-header {
     font-size: var(--font-size-lg);
     margin: var(--spacing-2xl) 0 var(--spacing-md);
+  }
+
+  .custom-select {
+    min-width: 100%;
+    max-width: 100%;
   }
 
   .vacancy-title {
@@ -951,17 +1074,22 @@
 
 @media (max-width: 480px) {
   #vacancy-search {
-    font-size: var(--font-size-xl);
-    padding: var(--spacing-md) var(--spacing-md) var(--spacing-md) 40px;
+    font-size: var(--font-size-sm);
+    padding: 12px 14px;
+  }
+
+  #vacancy-search::placeholder {
+    font-size: var(--font-size-sm);
   }
 
   .search-icon {
-    width: 24px;
-    height: 24px;
+    width: 16px;
+    height: 16px;
+    left: 14px;
   }
 
-  .search-hint {
-    font-size: var(--font-size-xs);
+  .search-input-container {
+    padding-left: 42px;
   }
 
   .mobile-filters-header,
@@ -969,9 +1097,16 @@
     padding: var(--spacing-lg);
   }
 
-  .mobile-filter-list,
-  .mobile-filter-options {
-    padding: 0 var(--spacing-lg);
+  .filter-item {
+    padding: var(--spacing-md) var(--spacing-lg);
+  }
+
+  .mobile-filter-option {
+    padding: var(--spacing-md) var(--spacing-lg);
+  }
+
+  .mobile-filters-actions {
+    padding: var(--spacing-lg);
   }
 
   .vacancy-title {
@@ -1011,398 +1146,4 @@
     position: relative !important;
     transform: none !important;
   }
-}
-/* ============ AVITO STYLE OVERRIDES ============ */
-/* Добавьте это в самый конец файла */
-
-/* 1. ОБНОВЛЯЕМ КАСТОМНЫЕ СЕЛЕКТЫ */
-.custom-select {
-    border: 1px solid #e0e0e0 !important;
-    border-radius: 8px !important;
-    background: white !important;
-    transition: all 0.2s ease !important;
-    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03) !important;
-}
-
-.custom-select:hover {
-    border-color: #b3b3b3 !important;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06) !important;
-}
-
-.custom-select.active {
-    border-color: #007bff !important;
-    box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.15) !important;
-}
-
-.select-header {
-    padding: 14px 16px !important;
-    min-height: 52px !important;
-}
-
-.select-header .selected-values {
-    font-size: 16px !important;
-    color: #333 !important;
-    font-weight: 400 !important;
-}
-
-.select-header .selected-values:empty::before {
-    color: #999 !important;
-}
-
-.select-controls {
-    display: flex;
-    gap: 10px !important;
-}
-
-.clear-btn {
-    font-size: 20px !important;
-    color: #999 !important;
-    width: 22px !important;
-    height: 22px !important;
-    display: flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    border-radius: 50% !important;
-    background: #f5f5f5 !important;
-}
-
-.clear-btn:hover {
-    color: #ff4444 !important;
-    background: #ffe6e6 !important;
-}
-
-.arrow-btn {
-    color: #666 !important;
-    font-size: 12px !important;
-    font-weight: bold !important;
-}
-
-.select-dropdown {
-    border: 1px solid #e0e0e0 !important;
-    border-radius: 8px !important;
-    box-shadow: 0 6px 24px rgba(0, 0, 0, 0.12) !important;
-    background: white !important;
-    top: calc(100% + 4px) !important;
-    animation: avitoDropdown 0.2s ease-out !important;
-}
-
-@keyframes avitoDropdown {
-    from {
-        opacity: 0;
-        transform: translateY(-8px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
-
-.dropdown-item {
-    padding: 15px 20px !important;
-    font-size: 15px !important;
-    color: #333 !important;
-    border-bottom: 1px solid #f8f8f8 !important;
-}
-
-.dropdown-item:hover {
-    background: #f8fafc !important;
-}
-
-.dropdown-item.selected {
-    background: #f0f7ff !important;
-    color: #007bff !important;
-    font-weight: 500 !important;
-}
-
-.dropdown-item input[type="checkbox"] {
-    width: 18px !important;
-    height: 18px !important;
-    border: 1.5px solid #d0d0d0 !important;
-    border-radius: 4px !important;
-    margin-right: 12px !important;
-}
-
-.dropdown-item input[type="checkbox"]:checked {
-    background-color: #007bff !important;
-    border-color: #007bff !important;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='white'%3E%3Cpath d='M16.707 5.293a1 1 0 00-1.414 0L8 12.586 4.707 9.293a1 1 0 00-1.414 1.414l4 4a1 1 0 001.414 0l8-8a1 1 0 000-1.414z'/%3E%3C/svg%3E") !important;
-    background-position: center !important;
-    background-repeat: no-repeat !important;
-    background-size: 12px !important;
-}
-
-/* 2. ОБНОВЛЯЕМ МОБИЛЬНЫЕ ФИЛЬТРЫ */
-.filter-item {
-    border-bottom: 1px solid #f0f0f0 !important;
-    background: white !important;
-}
-
-.filter-item:hover {
-    background: #f8f9fa !important;
-}
-
-.filter-label {
-    font-size: 16px !important;
-    color: #333 !important;
-    font-weight: 500 !important;
-}
-
-.filter-value {
-    font-size: 16px !important;
-    color: #666 !important;
-}
-
-.filter-arrow {
-    color: #999 !important;
-}
-
-/* 3. ОБНОВЛЯЕМ МОБИЛЬНЫЕ ВЫПАДАЮЩИЕ СПИСКИ */
-.mobile-filter-dropdown {
-    background: white !important;
-}
-
-.dropdown-header {
-    border-bottom: 1px solid #f0f0f0 !important;
-    background: white !important;
-}
-
-.dropdown-header span:first-child {
-    font-size: 18px !important;
-    font-weight: 600 !important;
-    color: #1a1a1a !important;
-}
-
-.close-dropdown {
-    font-size: 24px !important;
-    color: #999 !important;
-    padding: 4px 8px !important;
-    border-radius: 4px !important;
-}
-
-.close-dropdown:hover {
-    color: #ff4444 !important;
-    background: #ffe6e6 !important;
-}
-
-.mobile-filter-option {
-    padding: 16px 20px !important;
-    font-size: 16px !important;
-    color: #1a1a1a !important;
-    border-bottom: 1px solid #f8f8f8 !important;
-}
-
-.mobile-filter-option:hover {
-    background: #f8f9fa !important;
-}
-
-.mobile-filter-option.selected {
-    background: #f0f7ff !important;
-    color: #007bff !important;
-    font-weight: 500 !important;
-}
-
-.mobile-filter-option input[type="checkbox"] {
-    width: 20px !important;
-    height: 20px !important;
-    border: 1.5px solid #d0d0d0 !important;
-    border-radius: 5px !important;
-    accent-color: #007bff !important;
-}
-
-/* 4. ОБНОВЛЯЕМ ФИЛЬТР РЯД */
-.filters-row {
-    gap: 16px !important;
-    margin: 24px 0 !important;
-}
-
-/* 5. СКРОЛЛБАР В СТИЛЕ AVITO */
-.select-dropdown::-webkit-scrollbar {
-    width: 6px;
-}
-
-.select-dropdown::-webkit-scrollbar-track {
-    background: #f8f8f8;
-    border-radius: 3px;
-}
-
-.select-dropdown::-webkit-scrollbar-thumb {
-    background: #d0d0d0;
-    border-radius: 3px;
-}
-
-.select-dropdown::-webkit-scrollbar-thumb:hover {
-    background: #b3b3b3;
-}
-
-/* 6. ОБНОВЛЯЕМ ПОИСКОВУЮ СТРОКУ */
-.search-input-container {
-    border: 1px solid #e0e0e0 !important;
-    border-radius: 8px !important;
-    padding-left: 16px !important;
-    background: white !important;
-}
-
-.search-input-container:focus-within {
-    border-color: #007bff !important;
-    box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.15) !important;
-}
-
-#vacancy-search {
-    border: none !important;
-    padding: 16px !important;
-    font-size: 16px !important;
-}
-
-#vacancy-search::placeholder {
-    color: #999 !important;
-}
-
-.search-icon {
-    left: 16px !important;
-    width: 20px !important;
-    height: 20px !important;
-}
-
-/* 7. МОБИЛЬНАЯ КНОПКА ФИЛЬТРОВ */
-.mobile-filters-btn {
-    border: 1px solid #e0e0e0 !important;
-    border-radius: 8px !important;
-    background: white !important;
-    padding: 14px 16px !important;
-    font-size: 16px !important;
-}
-
-.mobile-filters-btn:hover {
-    border-color: #b3b3b3 !important;
-}
-
-/* 8. МОДАЛЬНОЕ ОКНО */
-.mobile-filters-modal {
-    background: rgba(0, 0, 0, 0.5) !important;
-    backdrop-filter: blur(4px) !important;
-}
-
-.mobile-filters-content {
-    background: white !important;
-    border-radius: 20px 20px 0 0 !important;
-    box-shadow: 0 -8px 48px rgba(0, 0, 0, 0.18) !important;
-}
-
-.mobile-filters-header {
-    padding: 24px 20px 20px !important;
-    border-bottom: 1px solid #f0f0f0 !important;
-}
-
-.mobile-filters-header h3 {
-    font-size: 20px !important;
-    color: #1a1a1a !important;
-}
-
-/* 9. КНОПКА ПРИМЕНЕНИЯ */
-.apply-btn {
-    background: #007bff !important;
-    border-radius: 8px !important;
-    font-weight: 600 !important;
-}
-
-.apply-btn:hover {
-    background: #0056b3 !important;
-}
-
-/* 10. ИНДИКАТОР ВЫБРАННЫХ ЗНАЧЕНИЙ */
-.custom-select.has-selection .selected-values {
-    color: #1a1a1a !important;
-    font-weight: 500 !important;
-}
-
-.custom-select.has-selection {
-    border-color: #007bff !important;
-    background: #f8fafc !important;
-}
-
-/* 11. СОСТОЯНИЕ "НИЧЕГО НЕ ВЫБРАНО" */
-.custom-select:not(.has-selection) .selected-values {
-    color: #999 !important;
-}
-
-/* 12. КНОПКА СБРОСА ВСЕХ ФИЛЬТРОВ */
-.reset-btn {
-    border: 1px solid #e0e0e0 !important;
-    border-radius: 8px !important;
-    background: white !important;
-    color: #666 !important;
-    margin: 16px 0 !important;
-}
-
-.reset-btn:hover {
-    border-color: #ff4444 !important;
-    color: #ff4444 !important;
-    background: #fff5f5 !important;
-}
-
-/* 13. СТИЛЬ ДЛЯ ПУСТЫХ РЕЗУЛЬТАТОВ */
-#vacancy-results:empty::before {
-    color: #666 !important;
-    font-size: 16px !important;
-}
-
-/* 14. КЛАСС ДЛЯ JS - СЧЕТЧИК ВЫБРАННЫХ */
-.selected-count {
-    background: #007bff;
-    color: white;
-    font-size: 12px;
-    font-weight: 600;
-    padding: 2px 6px;
-    border-radius: 10px;
-    margin-left: 6px;
-}
-
-/* 15. АДАПТИВНОСТЬ */
-@media (max-width: 768px) {
-    .custom-select {
-        border-radius: 8px !important;
-        margin-bottom: 12px !important;
-    }
-    
-    .select-header {
-        padding: 14px 16px !important;
-    }
-    
-    .selected-values {
-        font-size: 15px !important;
-    }
-    
-    .search-input-container {
-        border-radius: 8px !important;
-    }
-}
-
-/* ============ СТИЛИ ДЛЯ ЦИФР В ФИЛЬТРАХ ============ */
-.option-count {
-    color: #666;
-    font-size: 13px;
-    font-weight: normal;
-    margin-left: 6px;
-    opacity: 0.7;
-}
-
-.select-option:hover .option-count {
-    color: #333;
-    opacity: 0.9;
-}
-
-.select-option.selected .option-count {
-    color: #007bff;
-    opacity: 1;
-}
-
-/* Цифры в мобильной версии */
-.mobile-filter-option .option-count {
-    color: #666;
-    font-size: 13px;
-    margin-left: 8px;
-}
-
-.mobile-filter-option.selected .option-count {
-    color: #007bff;
 }
