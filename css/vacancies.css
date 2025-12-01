@@ -146,8 +146,8 @@
   left: 12px !important;
   top: 50%;
   transform: translateY(-50%);
-  width: 20px !important;
-  height: 20px !important;
+  width: 54px !important;
+  height: 54px !important;
   opacity: 0.5 !important;
   transition: opacity var(--transition-fast);
   pointer-events: none;
@@ -160,19 +160,19 @@
 #vacancy-search {
   width: 100%;
   padding: 16px 16px 16px 44px !important;
-  font-size: 20px !important;
+  font-size: var(--font-size-5xl) !important;
   font-weight: 400 !important;
   border: none;
   outline: none;
   background: transparent !important;
   color: #1a1a1a !important;
-  line-height: 1.5;
+  line-height: 1.2;
   font-family: var(--font-family);
 }
 
 #vacancy-search::placeholder {
   color: #999 !important;
-  font-size: 20px !important;
+  font-size: var(--font-size-5xl) !important;
   font-weight: 300 !important;
 }
 
@@ -188,25 +188,27 @@
 
 /* ===== ФИЛЬТРЫ В СТИЛЕ AVITO БЕЗ ПОДСВЕТОК ===== */
 .filters-row {
-  display: flex;
-  gap: var(--spacing-lg);
-  margin: var(--spacing-3xl) 0 var(--spacing-2xl);
-  flex-wrap: wrap;
+    display: flex;
+    gap: var(--spacing-lg);
+    margin: var(--spacing-3xl) 0 var(--spacing-2xl);
+    flex-wrap: nowrap; /* Не переносим на новую строку */
+    align-items: stretch;
+    width: 100%;
 }
 
 .custom-select {
-  position: relative;
-  font-family: var(--font-family);
-  flex: 1;
-  min-width: 280px;
-  max-width: 350px;
-  background: var(--background-white);
-  border: 1px solid var(--avito-border);
-  border-radius: 8px;
-  cursor: pointer;
-  user-select: none;
-  transition: all var(--transition-normal);
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
+    position: relative;
+    font-family: var(--font-family);
+    flex: 1; /* Растягивается на 50% */
+    min-width: 0; /* Убираем минимальную ширину */
+    max-width: none; /* Убираем максимальную ширину */
+    background: var(--background-white);
+    border: 1px solid var(--avito-border);
+    border-radius: 8px;
+    cursor: pointer;
+    user-select: none;
+    transition: all var(--transition-normal);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
 }
 
 .custom-select:hover {
