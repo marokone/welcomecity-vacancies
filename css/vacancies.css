@@ -1376,3 +1376,33 @@
         border-radius: 8px !important;
     }
 }
+
+/* ============ СТИЛИ ДЛЯ ЦИФР В ФИЛЬТРАХ ============ */
+.option-count {
+    color: #666;
+    font-size: 13px;
+    font-weight: normal;
+    margin-left: 6px;
+    opacity: 0.7;
+}
+
+.select-option:hover .option-count {
+    color: #333;
+    opacity: 0.9;
+}
+
+.select-option.selected .option-count {
+    color: #007bff;
+    opacity: 1;
+}
+
+/* Цифры в мобильной версии */
+.mobile-filter-option .option-count {
+    color: #666;
+    font-size: 13px;
+    margin-left: 8px;
+}
+
+.mobile-filter-option.selected .option-count {
+    color: #007bff;
+}
