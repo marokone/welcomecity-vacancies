@@ -178,7 +178,7 @@
 
 .search-hint {
   margin-top: 4px !important;
-  font-size: var(--font-size-2xl) !important;
+  font-size: var(--font-size-xs) !important;
   color: #666 !important;
   text-align: left;
   font-style: normal !important;
