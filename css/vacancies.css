@@ -344,7 +344,7 @@
   cursor: pointer;
   border-bottom: 1px solid var(--border-light);
   transition: background-color var(--transition-fast);
-  font-size: var(--font-size-sm);
+  font-size: var(--font-size-lg);
   color: var(--avito-text);
 }
 
