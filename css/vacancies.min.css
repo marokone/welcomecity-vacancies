@@ -1,0 +1,882 @@
+/* vacancies.min.css - ТОЛЬКО для страницы поиска вакансий */
+/* Убраны все стили для деталей вакансий */
+
+/* ===== CSS ПЕРЕМЕННЫЕ ===== */
+:root {
+  /* Цвета */
+  --primary-color: #048868;
+  --primary-hover: #036b50;
+  --primary-light: #058868;
+  --text-dark: #111;
+  --text-gray: #666;
+  --text-light: #999;
+  --border-color: #e0e0e0;
+  --border-light: #f0f0f0;
+  --background-white: #fff;
+  --background-gray: #f8f9fa;
+  --error-color: #e74c3c;
+
+  /* Avito-style colors */
+  --avito-blue: #007bff;
+  --avito-blue-light: #f0f7ff;
+  --avito-gray-light: #f8f9fa;
+  --avito-border: #e0e0e0;
+  --avito-text: #333;
+  --avito-placeholder: #999;
+
+  /* Типографика */
+  --font-family: 'ALSHaussNext', sans-serif;
+  --font-size-xs: 13px;
+  --font-size-sm: 14px;
+  --font-size-base: 16px;
+  --font-size-lg: 18px;
+  --font-size-xl: 20px;
+  --font-size-2xl: 24px;
+  --font-size-3xl: 28px;
+  --font-size-4xl: 36px;
+  --font-size-5xl: 48px;
+
+  /* Отступы */
+  --spacing-xs: 4px;
+  --spacing-sm: 8px;
+  --spacing-md: 12px;
+  --spacing-lg: 16px;
+  --spacing-xl: 20px;
+  --spacing-2xl: 24px;
+  --spacing-3xl: 32px;
+  --spacing-4xl: 40px;
+
+  /* Тени */
+  --shadow-sm: 0 4px 12px rgba(0, 0, 0, 0.1);
+  --shadow-md: 0 -4px 20px rgba(0, 0, 0, 0.15);
+  --shadow-lg: 0 6px 24px rgba(0, 0, 0, 0.12);
+
+  /* Анимации */
+  --transition-fast: 0.2s ease;
+  --transition-normal: 0.3s ease;
+  --transition-slow: 0.4s ease;
+}
+
+/* ===== БАЗОВЫЕ СТИЛИ ===== */
+* {
+  box-sizing: border-box;
+}
+
+/* ===== ОСНОВНАЯ СТРУКТУРА ===== */
+.vacancy-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: var(--spacing-4xl) var(--spacing-xl);
+  font-family: var(--font-family);
+}
+
+/* ===== ПОИСК В СТИЛЕ AVITO ===== */
+.search-wrapper {
+  width: 100%;
+  margin: var(--spacing-4xl) 0 var(--spacing-xl);
+}
+
+.search-input-container {
+  position: relative;
+  width: 100%;
+  border: none !important;
+  border-radius: 0 !important;
+  padding-left: 0 !important;
+  background: transparent !important;
+  border-bottom: 1px solid #e0e0e0 !important;
+  margin-bottom: 8px !important;
+  transition: border-color var(--transition-normal);
+}
+
+.search-input-container:focus-within {
+  border-bottom-color: #333 !important;
+  box-shadow: none !important;
+}
+
+.search-icon {
+  position: absolute;
+  left: 12px !important;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 54px !important;
+  height: 54px !important;
+  opacity: 0.5 !important;
+  transition: opacity var(--transition-fast);
+  pointer-events: none;
+}
+
+.search-input-container:focus-within .search-icon {
+  opacity: 0.8 !important;
+}
+
+#vacancy-search {
+  width: 100%;
+  padding: 16px 16px 16px 84px !important;
+  font-size: var(--font-size-5xl) !important;
+  font-weight: 400 !important;
+  border: none;
+  outline: none;
+  background: transparent !important;
+  color: #1a1a1a !important;
+  line-height: 1.2;
+  font-family: var(--font-family);
+}
+
+#vacancy-search::placeholder {
+  color: #999 !important;
+  font-size: var(--font-size-5xl) !important;
+  font-weight: 300 !important;
+}
+
+.search-hint {
+  margin-top: 4px !important;
+  font-size: var(--font-size-xs) !important;
+  color: #666 !important;
+  text-align: left;
+  font-style: normal !important;
+  font-family: var(--font-family);
+  font-weight: 400 !important;
+}
+
+/* ===== ФИЛЬТРЫ В СТИЛЕ AVITO ===== */
+.filters-row {
+    display: flex;
+    gap: var(--spacing-lg);
+    margin: var(--spacing-3xl) 0 var(--spacing-2xl);
+    flex-wrap: nowrap;
+    align-items: stretch;
+    width: 100%;
+}
+
+.custom-select {
+    position: relative;
+    font-family: var(--font-family);
+    flex: 1;
+    min-width: 0;
+    max-width: none;
+    background: var(--background-white);
+    border: 1px solid var(--avito-border);
+    border-radius: 8px;
+    cursor: pointer;
+    user-select: none;
+    transition: all var(--transition-normal);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
+}
+
+.custom-select:hover {
+  border-color: #b3b3b3;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+.custom-select.active {
+  border-color: #e0e0e0 !important;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03) !important;
+}
+
+.custom-select.has-selection {
+  border-color: #e0e0e0 !important;
+  background: white !important;
+}
+
+/* Header */
+.select-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 16px;
+  min-height: 52px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  border-radius: 8px;
+}
+
+.select-header .selected-values {
+  flex: 1;
+  margin-right: var(--spacing-sm);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: var(--font-size-base);
+  color: var(--avito-text);
+  font-weight: 400;
+}
+
+.custom-select:not(.has-selection) .selected-values {
+  color: var(--avito-placeholder);
+}
+
+.custom-select.has-selection .selected-values {
+  color: #333 !important;
+  font-weight: 500 !important;
+}
+
+.select-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.clear-btn {
+  font-size: 20px;
+  color: var(--avito-placeholder);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  width: 22px;
+  height: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: #f5f5f5;
+  opacity: 0;
+  transform: scale(0.8);
+}
+
+.custom-select.has-selection .clear-btn {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.clear-btn:hover {
+  color: var(--error-color);
+  background: #ffe6e6;
+}
+
+.arrow-btn {
+  font-size: 12px;
+  color: #666;
+  cursor: pointer;
+  transition: transform var(--transition-normal);
+  font-weight: bold;
+}
+
+.custom-select.active .arrow-btn {
+  transform: rotate(180deg);
+}
+
+/* Dropdown */
+.select-dropdown {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  background: var(--background-white);
+  border: 1px solid var(--avito-border);
+  border-radius: 8px;
+  max-height: 320px;
+  overflow-y: auto;
+  z-index: 100;
+  box-shadow: var(--shadow-lg);
+  display: none;
+  animation: dropdownSlide 0.2s ease-out;
+}
+
+@keyframes dropdownSlide {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.custom-select.active .select-dropdown {
+  display: block;
+}
+
+/* Options */
+.select-option {
+  display: flex;
+  align-items: center;
+  padding: 14px 16px;
+  cursor: pointer;
+  border-bottom: 1px solid var(--border-light);
+  transition: background-color var(--transition-fast);
+  font-size: var(--font-size-lg);
+  color: var(--avito-text);
+}
+
+.select-option:last-child {
+  border-bottom: none;
+}
+
+.select-option:hover {
+  background-color: var(--avito-gray-light);
+}
+
+.select-option.selected {
+  background-color: #f8f9fa !important;
+  color: #333 !important;
+  font-weight: 500 !important;
+}
+
+.select-option input[type="checkbox"] {
+  margin-right: var(--spacing-md);
+  width: 18px;
+  height: 18px;
+  border: 1.5px solid #d0d0d0;
+  border-radius: 4px;
+  cursor: pointer;
+  accent-color: #333 !important;
+}
+
+.select-option input[type="checkbox"]:checked {
+  background-color: #333 !important;
+  border-color: #333 !important;
+}
+
+/* Счетчик в опциях */
+.option-count {
+  color: var(--text-gray);
+  font-size: var(--font-size-xs);
+  font-weight: normal;
+  margin-left: var(--spacing-xs);
+  opacity: 0.7;
+}
+
+.select-option.selected .option-count {
+  color: #666 !important;
+  opacity: 1;
+}
+
+/* ===== КАРТОЧКИ ВАКАНСИЙ В СПИСКЕ ===== */
+.vacancy-card-wrapper {
+  margin-bottom: var(--spacing-md);
+}
+
+.vacancy-card {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: var(--background-white);
+  padding: var(--spacing-xl);
+  border: none;
+  border-radius: 0;
+  cursor: pointer;
+  transition: all var(--transition-normal);
+  position: relative;
+  overflow: hidden;
+  border-bottom: 1px solid var(--border-light);
+  text-decoration: none;
+  color: var(--text-dark) !important; /* ЧЕРНЫЙ цвет текста */
+}
+
+.vacancy-card::before {
+  content: '';
+  position: absolute;
+  left: -8px;
+  top: 0;
+  height: 100%;
+  width: 4px;
+  background: var(--primary-color);
+  transform: scaleX(0);
+  transition: transform var(--transition-normal);
+}
+
+.vacancy-card:hover {
+  transform: translateX(8px);
+  border-bottom-color: var(--primary-color);
+  text-decoration: none;
+  color: var(--text-dark) !important; /* Сохраняем черный при наведении */
+}
+
+.vacancy-card:hover::before {
+  transform: scaleX(1);
+}
+
+.arrow-icon {
+  font-size: var(--font-size-lg);
+  color: var(--text-light);
+  margin-left: var(--spacing-md);
+  flex-shrink: 0;
+  transition: all var(--transition-normal);
+  opacity: 0;
+}
+
+.vacancy-card:hover .arrow-icon {
+  opacity: 1;
+  color: var(--primary-color);
+}
+
+.vacancy-content h3 {
+  margin: 0 0 4px 0;
+  font-size: var(--font-size-lg);
+  font-weight: 600;
+  color: var(--text-dark) !important; /* ЧЕРНЫЙ заголовок */
+}
+
+.vacancy-meta {
+  margin: 0;
+  font-size: var(--font-size-sm);
+  color: var(--text-gray);
+}
+
+/* ===== ЗАГОЛОВКИ ПОДРАЗДЕЛЕНИЙ ===== */
+.department-header {
+  font-size: var(--font-size-3xl);
+  font-weight: 600;
+  color: var(--text-dark);
+  margin: var(--spacing-3xl) 0 var(--spacing-lg);
+  padding-bottom: var(--spacing-sm);
+  border-bottom: 1px solid var(--border-light);
+}
+
+.department-header small {
+  color: var(--text-light);
+  font-size: var(--font-size-base);
+  font-weight: normal;
+}
+
+/* ===== КНОПКА СБРОСА ===== */
+.reset-btn {
+  width: 100%;
+  padding: var(--spacing-md) var(--spacing-xl);
+  border: 1px solid var(--avito-border);
+  border-radius: 8px;
+  background: var(--background-white);
+  font-family: var(--font-family);
+  font-size: var(--font-size-base);
+  color: var(--text-gray);
+  cursor: pointer;
+  text-align: center;
+  transition: all var(--transition-normal);
+  margin: var(--spacing-lg) 0;
+}
+
+.reset-btn:hover {
+  border-color: var(--error-color);
+  color: var(--error-color);
+  background: #fff5f5;
+}
+
+/* ===== МОБИЛЬНЫЕ ФИЛЬТРЫ ===== */
+.mobile-filters-container {
+  display: none;
+  margin-bottom: var(--spacing-xl);
+}
+
+.mobile-filters-btn {
+  width: 100%;
+  padding: 14px 20px !important;
+  border: 1px solid #e0e0e0 !important;
+  border-radius: 8px !important;
+  background: white !important;
+  font-family: var(--font-family);
+  font-size: 16px !important;
+  font-weight: 500 !important;
+  color: #333 !important;
+  cursor: pointer;
+  text-align: left;
+  transition: all 0.2s !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+}
+
+.mobile-filters-btn:hover {
+  border-color: #b3b3b3 !important;
+  background: #f8f9fa !important;
+}
+
+.mobile-filters-btn::after {
+  content: "☰";
+  font-size: 18px;
+  color: #666;
+}
+
+/* Модальное окно фильтров */
+.mobile-filters-modal {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 1000;
+  backdrop-filter: blur(4px);
+}
+
+.mobile-filters-modal.active {
+  display: block;
+}
+
+.mobile-filters-content {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: var(--background-white);
+  border-radius: 20px 20px 0 0;
+  max-height: 85vh;
+  overflow: hidden;
+  transform: translateY(100%);
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 -8px 48px rgba(0, 0, 0, 0.18);
+}
+
+.mobile-filters-modal.active .mobile-filters-content {
+  transform: translateY(0);
+}
+
+.mobile-filters-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 24px 20px 20px;
+  border-bottom: 1px solid var(--border-light);
+  background: var(--background-white);
+  border-radius: 20px 20px 0 0;
+}
+
+.mobile-filters-header h3 {
+  margin: 0;
+  font-family: var(--font-family);
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--avito-text);
+}
+
+.filter-clear-btn {
+  background: none;
+  border: none;
+  font-family: var(--font-family);
+  font-size: var(--font-size-sm);
+  font-weight: 500;
+  color: var(--primary-color);
+  cursor: pointer;
+  padding: var(--spacing-xs) var(--spacing-sm);
+  border-radius: 4px;
+  transition: background-color var(--transition-fast);
+  opacity: 0.5;
+  pointer-events: none;
+  visibility: hidden;
+}
+
+.filter-clear-btn.visible {
+  opacity: 1 !important;
+  pointer-events: auto !important;
+  visibility: visible !important;
+}
+
+.filter-clear-btn:hover {
+  background-color: var(--avito-gray-light);
+}
+
+.mobile-filter-list {
+  padding: 0;
+}
+
+.filter-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--spacing-lg) var(--spacing-xl);
+  border-bottom: 1px solid var(--border-light);
+  cursor: pointer;
+  transition: background-color var(--transition-fast);
+  background: white;
+}
+
+.filter-item:hover {
+  background-color: var(--avito-gray-light);
+}
+
+.filter-item:last-child {
+  border-bottom: none;
+}
+
+.filter-label {
+  font-family: var(--font-family);
+  font-size: var(--font-size-base);
+  font-weight: 500;
+  color: var(--avito-text);
+}
+
+.filter-value {
+  font-family: var(--font-family);
+  font-size: var(--font-size-base);
+  color: var(--text-gray);
+  text-align: right;
+  flex: 1;
+  margin: 0 var(--spacing-md);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.filter-arrow {
+  font-family: var(--font-family);
+  font-size: var(--font-size-base);
+  color: var(--text-light);
+  transition: transform var(--transition-fast);
+}
+
+.filter-item:hover .filter-arrow {
+  color: var(--primary-color);
+  transform: translateX(2px);
+}
+
+/* Выпадающие списки для мобильных */
+.mobile-filter-dropdown {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: var(--background-white);
+  z-index: 1001;
+  display: none;
+  flex-direction: column;
+}
+
+.mobile-filter-dropdown.active {
+  display: flex;
+}
+
+.dropdown-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--spacing-lg) var(--spacing-xl);
+  border-bottom: 1px solid var(--border-light);
+  background: var(--background-white);
+  flex-shrink: 0;
+}
+
+.dropdown-header span {
+  font-family: var(--font-family);
+  font-size: var(--font-size-lg);
+  font-weight: 600;
+  color: var(--avito-text);
+}
+
+.close-dropdown {
+  background: none;
+  border: none;
+  font-family: var(--font-family);
+  font-size: var(--font-size-2xl);
+  color: var(--text-light);
+  cursor: pointer;
+  padding: var(--spacing-xs);
+  line-height: 1;
+  transition: color var(--transition-fast);
+  border-radius: 4px;
+}
+
+.close-dropdown:hover {
+  color: var(--error-color);
+  background: #ffe6e6;
+}
+
+.mobile-filter-options {
+  flex: 1;
+  overflow-y: auto;
+  padding: var(--spacing-sm) 0;
+}
+
+.mobile-filter-option {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+  padding: var(--spacing-md) var(--spacing-xl);
+  cursor: pointer;
+  transition: background-color var(--transition-fast);
+  border-bottom: 1px solid var(--border-light);
+  font-family: 'ALSHaussNext', sans-serif !important;
+  font-size: 16px !important;
+  color: #333 !important;
+}
+
+.mobile-filter-option:last-child {
+  border-bottom: none;
+}
+
+.mobile-filter-option:hover {
+  background-color: var(--avito-gray-light);
+}
+
+.mobile-filter-option.selected {
+  background-color: #f8f9fa !important;
+  color: #333 !important;
+  font-weight: 500 !important;
+}
+
+.mobile-filter-option input[type="checkbox"] {
+  margin: 0;
+  width: 18px;
+  height: 18px;
+  accent-color: #333 !important;
+}
+
+.mobile-filter-option label {
+  font-family: var(--font-family);
+  font-size: var(--font-size-base);
+  color: var(--avito-text);
+  cursor: pointer;
+  flex: 1;
+}
+
+.mobile-filters-actions {
+  padding: var(--spacing-xl);
+  background: var(--background-white);
+  border-top: 1px solid var(--border-light);
+  flex-shrink: 0;
+}
+
+.apply-btn {
+  width: 100%;
+  padding: var(--spacing-lg);
+  border: none;
+  border-radius: 8px;
+  background: #048868 !important;
+  font-family: var(--font-family);
+  font-size: 16px !important;
+  font-weight: 600 !important;
+  color: white;
+  cursor: pointer;
+  transition: all var(--transition-normal);
+}
+
+.apply-btn:hover {
+  background: #036b50 !important;
+  transform: translateY(-1px);
+}
+
+.apply-btn:active {
+  transform: translateY(0);
+}
+
+/* ===== СКРОЛЛБАР ===== */
+.select-dropdown::-webkit-scrollbar,
+.mobile-filter-options::-webkit-scrollbar {
+  width: 6px;
+}
+
+.select-dropdown::-webkit-scrollbar-track,
+.mobile-filter-options::-webkit-scrollbar-track {
+  background: #f8f8f8;
+  border-radius: 3px;
+}
+
+.select-dropdown::-webkit-scrollbar-thumb,
+.mobile-filter-options::-webkit-scrollbar-thumb {
+  background: #d0d0d0;
+  border-radius: 3px;
+}
+
+.select-dropdown::-webkit-scrollbar-thumb:hover,
+.mobile-filter-options::-webkit-scrollbar-thumb:hover {
+  background: #b3b3b3;
+}
+
+/* ===== МЕДИА-ЗАПРОСЫ ===== */
+@media (max-width: 768px) {
+  .vacancy-container {
+    padding: var(--spacing-xl) var(--spacing-lg);
+  }
+
+  .filters-row {
+    display: none;
+  }
+
+  .mobile-filters-container {
+    display: block !important;
+  }
+
+  .search-input-container {
+    border-bottom-width: 1px !important;
+  }
+
+  .search-icon {
+    left: 10px !important;
+    width: 18px !important;
+    height: 18px !important;
+  }
+
+  #vacancy-search {
+    font-size: 18px !important;
+    padding: 14px 14px 14px 40px !important;
+  }
+
+  #vacancy-search::placeholder {
+    font-size: 18px !important;
+  }
+
+  .search-hint {
+    font-size: 13px !important;
+  }
+
+  .vacancy-card {
+    padding: var(--spacing-lg);
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .arrow-icon {
+    align-self: flex-end;
+    margin-top: var(--spacing-md);
+    margin-left: 0;
+  }
+
+  .department-header {
+    font-size: var(--font-size-lg);
+    margin: var(--spacing-2xl) 0 var(--spacing-md);
+  }
+
+  .custom-select {
+    min-width: 100%;
+    max-width: 100%;
+  }
+
+  .mobile-filters-btn {
+    padding: 12px 16px !important;
+    font-size: 15px !important;
+  }
+}
+
+@media (max-width: 480px) {
+  #vacancy-search {
+    font-size: 16px !important;
+    padding: 12px 12px 12px 36px !important;
+  }
+
+  #vacancy-search::placeholder {
+    font-size: 16px !important;
+  }
+
+  .search-icon {
+    width: 16px !important;
+    height: 16px !important;
+    left: 8px !important;
+  }
+
+  .search-input-container {
+    padding-left: 0 !important;
+  }
+
+  .search-hint {
+    font-size: 12px !important;
+  }
+
+  .mobile-filters-header,
+  .dropdown-header {
+    padding: var(--spacing-lg);
+  }
+
+  .filter-item {
+    padding: var(--spacing-md) var(--spacing-lg);
+  }
+
+  .mobile-filter-option {
+    padding: var(--spacing-md) var(--spacing-lg);
+  }
+
+  .mobile-filters-actions {
+    padding: var(--spacing-lg);
+  }
+}
