@@ -1206,6 +1206,70 @@
     transform: none !important;
   }
 }
-
+/* ===== КРИТИЧЕСКИЕ ПРАВКИ ДЛЯ ПЛАНШЕТОВ (на основе диагностики) ===== */
+@media (min-width: 700px) and (max-width: 1000px) {
+    /* БЛОК 1: rec1480130251 - описание вакансии */
+    #rec1480130251 .t396__elem,
+    #rec1480130251 .t396__group,
+    #rec1480130251 .t396__carrier {
+        position: relative !important;
+        top: auto !important;
+        left: auto !important;
+        width: 100% !important;
+        margin-bottom: 24px !important;
+        display: block !important;
+    }
+    
+    /* БЛОК 2: rec1480130271 - требования */
+    #rec1480130271 .t396__elem,
+    #rec1480130271 .t396__group {
+        position: relative !important;
+        top: auto !important;
+        left: auto !important;
+        width: 100% !important;
+        margin-bottom: 24px !important;
+    }
+    
+    /* БЛОК 3: rec1480130281 - обязанности */
+    #rec1480130281 .t396__elem {
+        position: relative !important;
+        top: auto !important;
+        left: auto !important;
+        width: 100% !important;
+    }
+    
+    /* БЛОК 4: rec1480130341 - кнопка формы */
+    #rec1480130341 .t396__elem,
+    #rec1480130341 .t396__group {
+        position: relative !important;
+        top: auto !important;
+        left: auto !important;
+        width: 100% !important;
+    }
+    
+    /* АККОРДЕОН: rec1513289611 */
+    #rec1513289611 .t668__btn,
+    #rec1513289611 .t668__text {
+        position: relative !important;
+        top: auto !important;
+        left: auto !important;
+        width: 100% !important;
+    }
+    
+    /* ОБЩИЕ ПРАВИЛА для всех .t396 контейнеров */
+    .t396, .t396__artboard {
+        position: relative !important;
+        height: auto !important;
+        min-height: auto !important;
+    }
+    
+    /* УБИРАЕМ негативные отступы (ваша проблема left: -78.5px) */
+    .t396__elem,
+    .t396__group,
+    .t396__carrier {
+        left: 0 !important;
+        margin-left: 0 !important;
+    }
+}
 
 
