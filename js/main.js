@@ -33,12 +33,48 @@ class VacancyApp {
         this.fixTildaStyles();
         this.setupEventListeners();
         this.initializeSupabase();
+        this.initializeTildaIntegration();
         await this.loadVacanciesData();
         this.initializeFormAnimation();
         
         console.log('✅ Система готова');
     }
 
+    // ========== НОВЫЙ МЕТОД: Исправление высоты .t396 для планшетов ==========
+    fixTabletT396Heights() {
+        // Блоки с деталями вакансий
+        const detailBlocks = [
+            'rec1480130241',
+            'rec1480130251', 
+            'rec1480130271',
+            'rec1480130281',
+            'rec1480348491',
+            'rec1480130341',
+            'rec1513289611'
+        ];
+        
+        let fixedCount = 0;
+        
+        detailBlocks.forEach(id => {
+            const block = document.getElementById(id);
+            if (block) {
+                const t396 = block.querySelector('.t396, .t396__artboard');
+                if (t396 && t396.offsetHeight === 0) {
+                    // Минимальный фикс: только то, что нужно
+                    t396.style.height = 'auto';
+                    t396.style.minHeight = '100px';
+                    fixedCount++;
+                }
+            }
+        });
+        
+        if (fixedCount > 0) {
+            console.log(`Исправлено ${fixedCount} .t396 блоков для планшета`);
+        }
+    }
+    // ========== КОНЕЦ НОВОГО МЕТОДА ==========
+
+    // ========== ВАШ СУЩЕСТВУЮЩИЙ КОД ==========
     fixTildaStyles() {
         const fixes = `
             .t-records_overflow-hidden,
@@ -1028,124 +1064,106 @@ class VacancyApp {
         }
     }
 
-  showVacancyDetail(vacancy) {
-    sessionStorage.setItem('vacancyListScroll', window.scrollY);
-    sessionStorage.setItem('vacancyListHTML', document.getElementById('vacancy-results').innerHTML);
-    sessionStorage.setItem('vacancyListFilters', JSON.stringify({
-        project: this.state.currentProject,
-        department: this.state.currentDepartment,
-        query: this.state.currentQuery
-    }));
-    
-    this.state.currentVacancy = vacancy;
-    window.scrollTo(0, 0);
-    
-    const vacancyContainer = document.querySelector('.vacancy-container');
-    if (vacancyContainer) vacancyContainer.style.display = 'none';
-    
-    const headerBlock = document.getElementById('rec1480064551');
-    if (headerBlock) headerBlock.style.display = 'none';
-    
-    const secondBlock = document.getElementById('rec1475773601');
-    if (secondBlock) secondBlock.style.display = 'none';
-    
-    const detailBlocks = [
-        'rec1480130241',
-        'rec1480130251',
-        'rec1480130271',
-        'rec1480130281',
-        'rec1480348491',
-        'rec1480130341',
-        'rec1513289611'
-    ];
-    
-    let foundAny = false;
-    detailBlocks.forEach(id => {
-        const block = document.getElementById(id);
-        if (block) {
-            block.style.display = 'block';
-            foundAny = true;
-        }
-    });
-    
-    if (!foundAny) {
-        console.log('Ни один детальный блок не найден!');
-        return;
-    }
-    
-    const titleEl = document.querySelector('.vacancy-title');
-    if (titleEl) {
-        titleEl.textContent = vacancy.title || 'Не указано';
-        titleEl.style.fontFamily = 'ALSHaussNext, sans-serif';
-        titleEl.style.fontSize = '48px';
-        titleEl.style.fontWeight = '700';
-        titleEl.style.color = '#ffffff';
-    }
-    
-    const descEl = document.querySelector('.vacancy-description');
-    if (descEl) descEl.innerHTML = vacancy.description || 'Не указано';
-    
-    const reqEl = document.querySelector('.vacancy-requirements');
-    if (reqEl) reqEl.innerHTML = vacancy.requirements || 'Не указано';
-    
-    const respEl = document.querySelector('.vacancy-responsibilities');
-    if (respEl) respEl.innerHTML = vacancy.responsibilities || 'Не указано';
-    
-    const condEl = document.querySelector('.vacancy-conditions');
-    if (condEl) condEl.innerHTML = vacancy.conditions || 'Не указано';
-    
-    // +++ ТОЛЬКО ЭТО ДОБАВЛЯЕМ: Исправление для планшетов +++
-    setTimeout(() => {
-        this.updateTildaAccordion();
+ // ========== ОБНОВЛЕННЫЙ МЕТОД showVacancyDetail ==========
+    showVacancyDetail(vacancy) {
+        sessionStorage.setItem('vacancyListScroll', window.scrollY);
+        sessionStorage.setItem('vacancyListHTML', document.getElementById('vacancy-results').innerHTML);
+        sessionStorage.setItem('vacancyListFilters', JSON.stringify({
+            project: this.state.currentProject,
+            department: this.state.currentDepartment,
+            query: this.state.currentQuery
+        }));
         
-        // ТОЛЬКО для планшетного режима (700-1000px)
-        if (window.innerWidth >= 700 && window.innerWidth <= 1000) {
-            console.log('📱 Исправляем отображение для планшета...');
-            
-            // 1. Находим ВСЕ текстовые элементы Tilda и принудительно показываем их
-            const allTextElements = document.querySelectorAll('.tn-atom, .t-rich-text, .t-text');
-            console.log(`Найдено текстовых элементов: ${allTextElements.length}`);
-            
-            if (allTextElements.length > 0) {
-                allTextElements.forEach(el => {
-                    // Если элемент не виден (высота 0), но имеет текст
-                    if (el.offsetHeight === 0 && el.textContent.trim().length > 0) {
-                        el.style.cssText = `
-                            display: block !important;
-                            visibility: visible !important;
-                            opacity: 1 !important;
-                            height: auto !important;
-                            width: auto !important;
-                            position: relative !important;
-                        `;
+        this.state.currentVacancy = vacancy;
+        window.scrollTo(0, 0);
+        
+        // Скрываем основные блоки
+        const vacancyContainer = document.querySelector('.vacancy-container');
+        if (vacancyContainer) vacancyContainer.style.display = 'none';
+        
+        const headerBlock = document.getElementById('rec1480064551');
+        if (headerBlock) headerBlock.style.display = 'none';
+        
+        const secondBlock = document.getElementById('rec1475773601');
+        if (secondBlock) secondBlock.style.display = 'none';
+        
+        // Показываем детальные блоки
+        const detailBlocks = [
+            'rec1480130241',
+            'rec1480130251',
+            'rec1480130271',
+            'rec1480130281',
+            'rec1480348491',
+            'rec1480130341',
+            'rec1513289611'
+        ];
+        
+        let foundAny = false;
+        detailBlocks.forEach(id => {
+            const block = document.getElementById(id);
+            if (block) {
+                block.style.display = 'block';
+                foundAny = true;
+                
+                // СРАЗУ активируем .t396 внутри каждого блока
+                const t396Elements = block.querySelectorAll('.t396, .t396__artboard');
+                t396Elements.forEach(el => {
+                    if (el.offsetHeight === 0) {
+                        el.style.height = 'auto';
+                        el.style.minHeight = '100px';
                     }
                 });
             }
-            
-            // 2. Особенно важные блоки с контентом вакансии
-            const criticalBlocks = ['rec1480130251', 'rec1480130271', 'rec1480130281'];
-            criticalBlocks.forEach(id => {
-                const block = document.getElementById(id);
-                if (!block) return;
-                
-                // Принудительно пересчитываем высоту
-                block.style.height = 'auto';
-                void block.offsetHeight;
-                
-                console.log(`   ${id}: высота ${block.offsetHeight}px`);
-            });
-            
-            // 3. Отправляем resize для Tilda
-            setTimeout(() => {
-                window.dispatchEvent(new Event('resize'));
-            }, 100);
-            
-            console.log('✅ Правки для планшета применены');
+        });
+        
+        if (!foundAny) {
+            console.log('Ни один детальный блок не найден!');
+            return;
         }
-    }, 500);
-    
-    const newUrl = `${window.location.pathname}?vacancy=${encodeURIComponent(vacancy.title)}&project=${encodeURIComponent(vacancy.project || '')}&dept=${encodeURIComponent(vacancy.department)}`;
-    history.pushState({ vacancy }, '', newUrl);
+        
+        // Заполняем контент
+        const titleEl = document.querySelector('.vacancy-title');
+        if (titleEl) {
+            titleEl.textContent = vacancy.title || 'Не указано';
+            titleEl.style.fontFamily = 'ALSHaussNext, sans-serif';
+            titleEl.style.fontSize = '48px';
+            titleEl.style.fontWeight = '700';
+            titleEl.style.color = '#ffffff';
+        }
+        
+        const descEl = document.querySelector('.vacancy-description');
+        if (descEl) descEl.innerHTML = vacancy.description || 'Не указано';
+        
+        const reqEl = document.querySelector('.vacancy-requirements');
+        if (reqEl) reqEl.innerHTML = vacancy.requirements || 'Не указано';
+        
+        const respEl = document.querySelector('.vacancy-responsibilities');
+        if (respEl) respEl.innerHTML = vacancy.responsibilities || 'Не указано';
+        
+        const condEl = document.querySelector('.vacancy-conditions');
+        if (condEl) condEl.innerHTML = vacancy.conditions || 'Не указано';
+        
+        // Дополнительный фикс для планшетов (на всякий случай)
+        setTimeout(() => {
+            // Ваш метод updateTildaAccordion если есть
+            if (this.updateTildaAccordion) {
+                this.updateTildaAccordion();
+            }
+            
+            // Дополнительный вызов фикса для планшетов
+            const isTablet = window.innerWidth >= 700 && window.innerWidth <= 1000;
+            if (isTablet && this.fixTabletT396Heights) {
+                setTimeout(() => {
+                    this.fixTabletT396Heights();
+                }, 100);
+            }
+        }, 300);
+        
+        // Обновляем URL
+        const newUrl = `${window.location.pathname}?vacancy=${encodeURIComponent(vacancy.title)}&project=${encodeURIComponent(vacancy.project || '')}&dept=${encodeURIComponent(vacancy.department)}`;
+        history.pushState({ vacancy }, '', newUrl);
+    }
+    // ========== КОНЕЦ МЕТОДА showVacancyDetail ==========
 }
 
     showVacancyList() {
