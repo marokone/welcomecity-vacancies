@@ -1028,7 +1028,7 @@ class VacancyApp {
         }
     }
 
-   showVacancyDetail(vacancy) {
+  showVacancyDetail(vacancy) {
     sessionStorage.setItem('vacancyListScroll', window.scrollY);
     sessionStorage.setItem('vacancyListHTML', document.getElementById('vacancy-results').innerHTML);
     sessionStorage.setItem('vacancyListFilters', JSON.stringify({
@@ -1094,88 +1094,55 @@ class VacancyApp {
     const condEl = document.querySelector('.vacancy-conditions');
     if (condEl) condEl.innerHTML = vacancy.conditions || 'Не указано';
     
+    // +++ ТОЛЬКО ЭТО ДОБАВЛЯЕМ: Исправление для планшетов +++
     setTimeout(() => {
         this.updateTildaAccordion();
         
-        // +++ НОВЫЙ ТРИГГЕР: ПЕРЕИНИЦИАЛИЗАЦИЯ ВСЕХ БЛОКОВ TILDA +++
-        // Даем время на заполнение данных, затем переинициализируем ВСЕ блоки
-        setTimeout(() => {
-            console.log('🔄 Запуск переинициализации блоков Tilda...');
+        // ТОЛЬКО для планшетного режима (700-1000px)
+        if (window.innerWidth >= 700 && window.innerWidth <= 1000) {
+            console.log('📱 Исправляем отображение для планшета...');
             
-            // 1. Все проблемные блоки, которые нужно исправить
-            const tildaBlocks = [
-                'rec1480130241',
-                'rec1480130251', 
-                'rec1480130271',
-                'rec1480130281',
-                'rec1480130341',
-                'rec1513289611'
-            ];
+            // 1. Находим ВСЕ текстовые элементы Tilda и принудительно показываем их
+            const allTextElements = document.querySelectorAll('.tn-atom, .t-rich-text, .t-text');
+            console.log(`Найдено текстовых элементов: ${allTextElements.length}`);
             
-            let fixedCount = 0;
+            if (allTextElements.length > 0) {
+                allTextElements.forEach(el => {
+                    // Если элемент не виден (высота 0), но имеет текст
+                    if (el.offsetHeight === 0 && el.textContent.trim().length > 0) {
+                        el.style.cssText = `
+                            display: block !important;
+                            visibility: visible !important;
+                            opacity: 1 !important;
+                            height: auto !important;
+                            width: auto !important;
+                            position: relative !important;
+                        `;
+                    }
+                });
+            }
             
-            tildaBlocks.forEach(id => {
+            // 2. Особенно важные блоки с контентом вакансии
+            const criticalBlocks = ['rec1480130251', 'rec1480130271', 'rec1480130281'];
+            criticalBlocks.forEach(id => {
                 const block = document.getElementById(id);
                 if (!block) return;
                 
-                // 2. Находим контейнер Tilda внутри блока
-                const tildaContainer = block.querySelector('.t396, .t396__artboard, .t668, .t-accordion');
-                if (!tildaContainer) return;
+                // Принудительно пересчитываем высоту
+                block.style.height = 'auto';
+                void block.offsetHeight;
                 
-                // 3. ПРИНУДИТЕЛЬНАЯ ПЕРЕИНИЦИАЛИЗАЦИЯ КОНТЕЙНЕРА
-                // Сохраняем оригинальные значения
-                const originalDisplay = tildaContainer.style.display;
-                
-                // Микро-изменение для запуска reflow
-                tildaContainer.style.opacity = '0.999';
-                void tildaContainer.offsetHeight; // Рефлоу 1
-                tildaContainer.style.opacity = '';
-                
-                // Временное скрытие/показ для полной перерисовки
-                tildaContainer.style.display = 'none';
-                void tildaContainer.offsetHeight; // Рефлоу 2
-                tildaContainer.style.display = originalDisplay || '';
-                void tildaContainer.offsetHeight; // Рефлоу 3
-                
-                // 4. ОСОБАЯ ОБРАБОТКА ДЛЯ АККОРДЕОНА
-                if (id === 'rec1513289611') {
-                    // Закрываем все открытые вкладки аккордеона
-                    const accordionItems = block.querySelectorAll('.t-accordion__item, .t668__btn');
-                    if (accordionItems.length > 0) {
-                        accordionItems.forEach(item => {
-                            item.classList.remove('t-accordion__item_open', 't668__opened');
-                        });
-                        // Открываем первую вкладку
-                        accordionItems[0].classList.add('t-accordion__item_open', 't668__opened');
-                    }
-                }
-                
-                fixedCount++;
-                console.log(`   ✅ Блок ${id} переинициализирован`);
+                console.log(`   ${id}: высота ${block.offsetHeight}px`);
             });
             
-            console.log(`🎉 Переинициализировано блоков: ${fixedCount}`);
-            
-            // 5. ФИНАЛЬНЫЙ СИГНАЛ ДЛЯ ВСЕЙ СТРАНИЦЫ
-            // Отправляем resize событие (Tilda часто на него реагирует)
+            // 3. Отправляем resize для Tilda
             setTimeout(() => {
                 window.dispatchEvent(new Event('resize'));
-                console.log('📐 Resize event отправлен для Tilda');
-                
-                // Дополнительно: для планшетов принудительно обновляем высоту
-                if (window.innerWidth >= 700 && window.innerWidth <= 1000) {
-                    console.log('📱 Дополнительная оптимизация для планшетного режима');
-                    document.querySelectorAll('.t396').forEach(el => {
-                        el.style.height = 'auto';
-                        void el.offsetHeight;
-                    });
-                }
-            }, 50);
+            }, 100);
             
-        }, 200); // Задержка после updateTildaAccordion
-        // +++ КОНЕЦ НОВОГО ТРИГГЕРА +++
-        
-    }, 500); // Увеличиваем основную задержку для гарантии загрузки Tilda стилей
+            console.log('✅ Правки для планшета применены');
+        }
+    }, 500);
     
     const newUrl = `${window.location.pathname}?vacancy=${encodeURIComponent(vacancy.title)}&project=${encodeURIComponent(vacancy.project || '')}&dept=${encodeURIComponent(vacancy.department)}`;
     history.pushState({ vacancy }, '', newUrl);
