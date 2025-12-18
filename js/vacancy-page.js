@@ -529,3 +529,70 @@ function loadSupabaseManually() {
     
     document.head.appendChild(supabaseScript);
 }
+
+// ==========================
+// АВТОМАТИЧЕСКИЙ ЗАПУСК ДЛЯ TILDA
+// ==========================
+
+// Ждем когда все загрузится
+setTimeout(function() {
+    console.log('🔧 Проверяем страницу вакансии...');
+    
+    // 1. Проверяем что мы на странице /vacancy
+    const isVacancyPage = window.location.pathname.includes('/vacancy') || 
+                          window.location.pathname === '/vacancy' ||
+                          document.querySelector('.vacancy-title');
+    
+    if (isVacancyPage) {
+        console.log('✅ Мы на странице вакансии');
+        
+        // 2. Проверяем Supabase
+        if (!window.supabase) {
+            console.log('⚠️ Supabase не найден, загружаем...');
+            
+            // Создаем скрипт Supabase
+            const script = document.createElement('script');
+            script.src = 'https://unpkg.com/@supabase/supabase-js@2';
+            
+            script.onload = function() {
+                console.log('✅ Supabase загружен');
+                
+                // Инициализируем Supabase с ТВОИМИ ключами
+                window.supabase = supabase.createClient(
+                    'https://vhbiezamhpyejdqvvwuj.supabase.co',
+                    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZoYmllemFtaHB5ZWpkcXZ2d3VqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjE2Njc0MDgsImV4cCI6MjA3NzI0MzQwOH0.13h_XJ7kQFtuCjavkOXN9TzXNF2X4jX5-rcNCFiFqO0'
+                );
+                
+                // Запускаем наше приложение
+                startVacancyApp();
+            };
+            
+            script.onerror = function() {
+                console.error('❌ Ошибка загрузки Supabase');
+            };
+            
+            document.head.appendChild(script);
+        } else {
+            // Supabase уже есть, запускаем приложение
+            console.log('✅ Supabase уже загружен');
+            startVacancyApp();
+        }
+    }
+}, 1000); // Даем Tilda время на загрузку
+
+// Функция запуска приложения
+function startVacancyApp() {
+    console.log('🚀 Запускаем VacancyPageApp...');
+    
+    try {
+        // Создаем экземпляр приложения
+        window.vacancyPageApp = new VacancyPageApp();
+        console.log('✅ VacancyPageApp запущен!');
+    } catch (error) {
+        console.error('❌ Ошибка при запуске:', error);
+    }
+}
+
+// Простая проверка для отладки
+console.log('📄 vacancy-page.js загружен');
+console.log('Текущий путь:', window.location.pathname);
