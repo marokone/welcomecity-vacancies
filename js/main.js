@@ -39,8 +39,63 @@ class VacancyApp {
         console.log('✅ Система готова');
     }
 
-    // ========== ФИКС ДЛЯ ПЛАНШЕТОВ ==========
+    // ========== НОВЫЙ МЕТОД: ПРИНУДИТЕЛЬНЫЙ РЕРАНДЕР TILDA ==========
+    forceTildaAdaptiveReflow() {
+        const isTablet = window.innerWidth >= 700 && window.innerWidth <= 1000;
+        if (!isTablet) return;
+
+        // 1. Первый кадр — DOM уже показан
+        requestAnimationFrame(() => {
+            // 2. Сообщаем Tilda, что "экран изменился"
+            window.dispatchEvent(new Event('resize'));
+
+            // 3. Второй кадр — Zero Blocks пересчитывают размеры
+            requestAnimationFrame(() => {
+                window.dispatchEvent(new Event('resize'));
+
+                // 4. Контрольная проверка (не фикс, а диагностика)
+                this.logBrokenT396?.();
+            });
+        });
+    }
+
+    // ========== ДИАГНОСТИЧЕСКИЙ МЕТОД ==========
+    logBrokenT396() {
+        const detailBlocks = [
+            'rec1480130241',
+            'rec1480130251',
+            'rec1480130271',
+            'rec1480130281',
+            'rec1480348491',
+            'rec1480130341',
+            'rec1513289611'
+        ];
+
+        let brokenCount = 0;
+        
+        detailBlocks.forEach(id => {
+            const block = document.getElementById(id);
+            if (!block) return;
+
+            const t396 = block.querySelector('.t396, .t396__artboard');
+            if (!t396) return;
+
+            if (t396.offsetHeight === 0) {
+                brokenCount++;
+                console.warn(`[TILDA][TABLET] ${id} still has ZERO height`, t396);
+            }
+        });
+
+        if (brokenCount > 0) {
+            console.log(`[TILDA][TABLET] Найдено ${brokenCount} блоков с нулевой высотой`);
+        }
+    }
+
+    // ========== УПРОЩЕННЫЙ ФИКС ДЛЯ ПЛАНШЕТОВ (резервный) ==========
     fixTabletT396Heights() {
+        const isTablet = window.innerWidth >= 700 && window.innerWidth <= 1000;
+        if (!isTablet) return;
+
         const detailBlocks = [
             'rec1480130241',
             'rec1480130251', 
@@ -55,9 +110,10 @@ class VacancyApp {
         
         detailBlocks.forEach(id => {
             const block = document.getElementById(id);
-            if (block) {
+            if (block && block.style.display !== 'none') {
                 const t396 = block.querySelector('.t396, .t396__artboard');
                 if (t396 && t396.offsetHeight === 0) {
+                    // ТОЛЬКО как резерв, после ресайза Tilda
                     t396.style.height = 'auto';
                     t396.style.minHeight = '100px';
                     fixedCount++;
@@ -66,7 +122,7 @@ class VacancyApp {
         });
         
         if (fixedCount > 0) {
-            console.log(`Исправлено ${fixedCount} .t396 блоков для планшета`);
+            console.log(`[TILDA][TABLET] Исправлено ${fixedCount} .t396 блоков (резервный метод)`);
         }
     }
 
@@ -97,6 +153,18 @@ class VacancyApp {
                 max-width: 1200px !important;
                 margin: 0 auto !important;
                 padding: 40px 20px !important;
+            }
+
+            /* Дополнительные стили для планшетов */
+            @media (min-width: 700px) and (max-width: 1000px) {
+                .t-rec[style*="display: block"] .t396,
+                .t-rec[style*="display: block"] .t396__artboard {
+                    animation: tilda-tablet-fix 0.01s;
+                }
+                
+                @keyframes tilda-tablet-fix {
+                    to { opacity: 0.999; }
+                }
             }
         `;
 
@@ -1057,7 +1125,7 @@ class VacancyApp {
         }
     }
 
-    // ========== ОБНОВЛЕННЫЙ МЕТОД showVacancyDetail С ФИКСОМ ДЛЯ ПЛАНШЕТОВ ==========
+    // ========== ОБНОВЛЕННЫЙ МЕТОД showVacancyDetail С АРХИТЕКТУРНЫМ ФИКСОМ ==========
     showVacancyDetail(vacancy) {
         sessionStorage.setItem('vacancyListScroll', window.scrollY);
         sessionStorage.setItem('vacancyListHTML', document.getElementById('vacancy-results').innerHTML);
@@ -1095,15 +1163,6 @@ class VacancyApp {
             if (block) {
                 block.style.display = 'block';
                 foundAny = true;
-                
-                // ===== ФИКС ДЛЯ ПЛАНШЕТОВ: сразу активируем .t396 внутри каждого блока =====
-                const t396Elements = block.querySelectorAll('.t396, .t396__artboard');
-                t396Elements.forEach(el => {
-                    if (el.offsetHeight === 0) {
-                        el.style.height = 'auto';
-                        el.style.minHeight = '100px';
-                    }
-                });
             }
         });
         
@@ -1133,26 +1192,13 @@ class VacancyApp {
         const condEl = document.querySelector('.vacancy-conditions');
         if (condEl) condEl.innerHTML = vacancy.conditions || 'Не указано';
         
-        // Дополнительный фикс для планшетов
+        // 🔥 АРХИТЕКТУРНЫЙ ФИКС ДЛЯ ПЛАНШЕТОВ: вызываем принудительный рерандер Tilda
+        this.forceTildaAdaptiveReflow();
+        
+        // Обновляем аккордеон Tilda
         setTimeout(() => {
             this.updateTildaAccordion();
-            
-            // ТОЛЬКО для планшетного режима (700-1000px)
-            const isTablet = window.innerWidth >= 700 && window.innerWidth <= 1000;
-            if (isTablet) {
-                console.log('📱 Исправляем отображение для планшета...');
-                
-                // Вызываем метод фикса для планшетов
-                if (this.fixTabletT396Heights) {
-                    this.fixTabletT396Heights();
-                }
-                
-                // Отправляем resize для Tilda
-                setTimeout(() => {
-                    window.dispatchEvent(new Event('resize'));
-                }, 100);
-            }
-        }, 300);
+        }, 100);
         
         const newUrl = `${window.location.pathname}?vacancy=${encodeURIComponent(vacancy.title)}&project=${encodeURIComponent(vacancy.project || '')}&dept=${encodeURIComponent(vacancy.department)}`;
         history.pushState({ vacancy }, '', newUrl);
