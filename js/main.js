@@ -1094,21 +1094,9 @@ class VacancyApp {
     const condEl = document.querySelector('.vacancy-conditions');
     if (condEl) condEl.innerHTML = vacancy.conditions || 'Не указано';
     
-    // +++ УВЕЛИЧИВАЕМ ЗАДЕРЖКУ И ДОБАВЛЯЕМ МИНИМАЛЬНЫЙ ТРИГГЕР +++
     setTimeout(() => {
         this.updateTildaAccordion();
-        
-        // МИНИМАЛЬНЫЙ ТРИГГЕР ДЛЯ TILDA (2 строки)
-        setTimeout(() => {
-            // Заставляем браузер перерисовать ВСЁ, включая Tilda блоки
-            document.body.style.transform = 'translateZ(0)';
-            void document.body.offsetHeight; // Принудительный reflow
-            document.body.style.transform = '';
-            
-            console.log('✅ Tilda reflow triggered');
-        }, 50);
-        
-    }, 700); // Увеличиваем до 700ms для полной инициализации Tilda
+    }, 300);
     
     const newUrl = `${window.location.pathname}?vacancy=${encodeURIComponent(vacancy.title)}&project=${encodeURIComponent(vacancy.project || '')}&dept=${encodeURIComponent(vacancy.department)}`;
     history.pushState({ vacancy }, '', newUrl);
