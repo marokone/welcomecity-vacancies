@@ -1142,7 +1142,7 @@ showVacancyDetail(vacancy) {
     const condEl = document.querySelector('.vacancy-conditions');
     if (condEl) condEl.innerHTML = vacancy.conditions || 'Не указано';
     
-    // Дополнительный фикс для планшетов (на всякий случай)
+        // Дополнительный фикс для планшетов (на всякий случай)
     setTimeout(() => {
         // Ваш метод updateTildaAccordion если есть
         if (this.updateTildaAccordion) {
@@ -1156,12 +1156,13 @@ showVacancyDetail(vacancy) {
                 this.fixTabletT396Heights();
             }, 100);
         }
-    }, 300);
+    }, 300); // ← ЭТА скобка закрывает ВНЕШНИЙ setTimeout
     
     // Обновляем URL
     const newUrl = `${window.location.pathname}?vacancy=${encodeURIComponent(vacancy.title)}&project=${encodeURIComponent(vacancy.project || '')}&dept=${encodeURIComponent(vacancy.department)}`;
     history.pushState({ vacancy }, '', newUrl);
-}
-// ========== КОНЕЦ МЕТОДА showVacancyDetail ==========
+} // ← закрывает метод showVacancyDetail
+
+} // ← закрывает КЛАСС VacancyApp (если нет других методов после)
 
 window.vacancyApp = new VacancyApp();
