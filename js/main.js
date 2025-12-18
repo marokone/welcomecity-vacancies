@@ -1,1420 +1,187 @@
-// Main Vacancy Application - AVITO STYLE WITHOUT HIGHLIGHTS
-class VacancyApp {
-    constructor() {
-        this.config = {
-            supabaseUrl: 'SUPABASE_URL_PLACEHOLDER',
-            supabaseKey: 'SUPABASE_KEY_PLACEHOLDER',
-            cacheKeys: {
-                data: 'wc-vacancies-data',
-                timestamp: 'wc-vacancies-timestamp'
-            },
-            cacheTTL: 5 * 60 * 1000
-        };
-        
-        this.state = {
-            allVacancies: [],
-            currentProject: [],
-            currentDepartment: [],
-            currentQuery: '',
-            currentVacancy: null,
-            placeholderInterval: null,
-            supabase: null,
-            realtimeSubscription: null,
-            projectCounts: {},
-            deptCounts: {}
-        };
-        
-        this.init();
+// ==========================
+// Главный скрипт для search-vacancy
+// ==========================
+
+// конфиг Supabase (подставь свои)
+const SUPABASE_URL = 'https://vhbiezamhpyejdqvvwuj.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5...'; // твой ключ
+
+const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+// состояние
+let allVacancies = [];
+let currentFilters = {
+  projects: [],
+  departments: []
+};
+let currentQuery = '';
+
+// элементы DOM
+const inputSearch = document.getElementById('vacancy-search');
+const resultsContainer = document.getElementById('vacancy-results');
+const projectFilterEl = document.getElementById('project-filter');
+const deptFilterEl = document.getElementById('department-filter');
+const resetAllBtn = document.getElementById('reset-all-filters');
+
+// ==========================
+// Загрузка данных
+// ==========================
+async function loadVacancies() {
+  try {
+    const { data, error } = await supabase
+      .from('vacancies')
+      .select('*')
+      .eq('status', 'active')
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      console.error('Ошибка Supabase:', error);
+      resultsContainer.innerHTML = '<p>Не удалось загрузить вакансии</p>';
+      return;
     }
+    allVacancies = data;
+    renderFilters();
+    renderResults();
+  } catch (e) {
+    console.error('Ошибка загрузки:', e);
+    resultsContainer.innerHTML = '<p>Ошибка при загрузке вакансий</p>';
+  }
+}
 
-    async init() {
-        console.log('🚀 Инициализация системы вакансий...');
-        
-        this.fixTildaStyles();
-        this.setupEventListeners();
-        this.initializeSupabase();
-        await this.loadVacanciesData();
-        this.initializeFormAnimation();
-        
-        console.log('✅ Система готова');
+// ==========================
+// Фильтры
+// ==========================
+function getAvailableProjects() {
+  const counts = {};
+  allVacancies.forEach(v => {
+    const p = v.project || 'Без проекта';
+    if (!counts[p]) counts[p] = 0;
+    counts[p]++;
+  });
+  return counts;
+}
+
+function getAvailableDepartments() {
+  const counts = {};
+  allVacancies.forEach(v => {
+    const d = v.department || 'Без отдела';
+    if (!counts[d]) counts[d] = 0;
+    counts[d]++;
+  });
+  return counts;
+}
+
+function renderFilters() {
+  if (projectFilterEl) {
+    const projects = getAvailableProjects();
+    const dropdown = projectFilterEl.querySelector('.select-dropdown');
+    dropdown.innerHTML = Object.entries(projects).map(([p, c]) => {
+      return `<label><input type="checkbox" value="${p}"> ${p} (${c})</label>`;
+    }).join('');
+  }
+
+  if (deptFilterEl) {
+    const depts = getAvailableDepartments();
+    const dropdown = deptFilterEl.querySelector('.select-dropdown');
+    dropdown.innerHTML = Object.entries(depts).map(([d, c]) => {
+      return `<label><input type="checkbox" value="${d}"> ${d} (${c})</label>`;
+    }).join('');
+  }
+}
+
+// ==========================
+// Поиск и отрисовка
+// ==========================
+function renderResults() {
+  const query = currentQuery.toLowerCase();
+
+  const filtered = allVacancies.filter(v => {
+    const matchesSearch =
+      !query ||
+      (v.title && v.title.toLowerCase().includes(query)) ||
+      (v.description && v.description.toLowerCase().includes(query));
+    const matchesProject =
+      !currentFilters.projects.length ||
+      currentFilters.projects.includes(v.project || 'Без проекта');
+    const matchesDept =
+      !currentFilters.departments.length ||
+      currentFilters.departments.includes(v.department || 'Без отдела');
+
+    return matchesSearch && matchesProject && matchesDept;
+  });
+
+  if (filtered.length === 0) {
+    resultsContainer.innerHTML = '<p>Вакансий не найдено</p>';
+    return;
+  }
+
+  resultsContainer.innerHTML = filtered.map(vac => {
+    const title = vac.title || 'Без названия';
+    const project = vac.project || 'Без проекта';
+    const dept = vac.department || 'Без отдела';
+
+    // карточка вакансии с обычной ссылкой
+    return `
+      <div class="vacancy-card">
+        <a href="/vacancy?vacancy_id=${vac.id}" class="vacancy-card-link">
+          <div class="vacancy-title">${title}</div>
+          <div class="vacancy-meta">
+            ${project} — ${dept}
+          </div>
+        </a>
+      </div>
+    `;
+  }).join('');
+}
+
+// ==========================
+// Слушатели событий
+// ==========================
+if (inputSearch) {
+  inputSearch.addEventListener('input', (e) => {
+    currentQuery = e.target.value;
+    renderResults();
+  });
+}
+
+if (projectFilterEl) {
+  projectFilterEl.addEventListener('change', (e) => {
+    const val = e.target.value;
+    if (e.target.checked) {
+      currentFilters.projects.push(val);
+    } else {
+      currentFilters.projects = currentFilters.projects.filter(x => x !== val);
     }
+    renderResults();
+  });
+}
 
-    // ========== НОВЫЙ МЕТОД: ПРИНУДИТЕЛЬНЫЙ РЕРАНДЕР TILDA ==========
-    forceTildaAdaptiveReflow() {
-        const isTablet = window.innerWidth >= 700 && window.innerWidth <= 1000;
-        if (!isTablet) return;
-
-        // 1. Первый кадр — DOM уже показан
-        requestAnimationFrame(() => {
-            // 2. Сообщаем Tilda, что "экран изменился"
-            window.dispatchEvent(new Event('resize'));
-
-            // 3. Второй кадр — Zero Blocks пересчитывают размеры
-            requestAnimationFrame(() => {
-                window.dispatchEvent(new Event('resize'));
-
-                // 4. Контрольная проверка (не фикс, а диагностика)
-                this.logBrokenT396?.();
-            });
-        });
+if (deptFilterEl) {
+  deptFilterEl.addEventListener('change', (e) => {
+    const val = e.target.value;
+    if (e.target.checked) {
+      currentFilters.departments.push(val);
+    } else {
+      currentFilters.departments = currentFilters.departments.filter(x => x !== val);
     }
-
-    // ========== ДИАГНОСТИЧЕСКИЙ МЕТОД ==========
-    logBrokenT396() {
-        const detailBlocks = [
-            'rec1480130241',
-            'rec1480130251',
-            'rec1480130271',
-            'rec1480130281',
-            'rec1480348491',
-            'rec1480130341',
-            'rec1513289611'
-        ];
-
-        let brokenCount = 0;
-        
-        detailBlocks.forEach(id => {
-            const block = document.getElementById(id);
-            if (!block) return;
-
-            const t396 = block.querySelector('.t396, .t396__artboard');
-            if (!t396) return;
-
-            if (t396.offsetHeight === 0) {
-                brokenCount++;
-                console.warn(`[TILDA][TABLET] ${id} still has ZERO height`, t396);
-            }
-        });
-
-        if (brokenCount > 0) {
-            console.log(`[TILDA][TABLET] Найдено ${brokenCount} блоков с нулевой высотой`);
-        }
-    }
-
-    // ========== УПРОЩЕННЫЙ ФИКС ДЛЯ ПЛАНШЕТОВ (резервный) ==========
-    fixTabletT396Heights() {
-        const isTablet = window.innerWidth >= 700 && window.innerWidth <= 1000;
-        if (!isTablet) return;
-
-        const detailBlocks = [
-            'rec1480130241',
-            'rec1480130251', 
-            'rec1480130271',
-            'rec1480130281',
-            'rec1480348491',
-            'rec1480130341',
-            'rec1513289611'
-        ];
-        
-        let fixedCount = 0;
-        
-        detailBlocks.forEach(id => {
-            const block = document.getElementById(id);
-            if (block && block.style.display !== 'none') {
-                const t396 = block.querySelector('.t396, .t396__artboard');
-                if (t396 && t396.offsetHeight === 0) {
-                    // ТОЛЬКО как резерв, после ресайза Tilda
-                    t396.style.height = 'auto';
-                    t396.style.minHeight = '100px';
-                    fixedCount++;
-                }
-            }
-        });
-        
-        if (fixedCount > 0) {
-            console.log(`[TILDA][TABLET] Исправлено ${fixedCount} .t396 блоков (резервный метод)`);
-        }
-    }
-
-    fixTildaStyles() {
-        const fixes = `
-            .t-records_overflow-hidden,
-            .t-records,
-            .t-body {
-                overflow: visible !important;
-                height: auto !important;
-                min-height: 100vh !important;
-            }
-
-            .t396, .t396__artboard,
-            #rec1480064551 .t396,
-            #rec1475773601 .t396 {
-                height: auto !important;
-                min-height: auto !important;
-                overflow: visible !important;
-            }
-
-            #rec1480064551 {
-                position: relative !important;
-                z-index: 1 !important;
-            }
-
-            .vacancy-container {
-                max-width: 1200px !important;
-                margin: 0 auto !important;
-                padding: 40px 20px !important;
-            }
-
-            /* Дополнительные стили для планшетов */
-            @media (min-width: 700px) and (max-width: 1000px) {
-                .t-rec[style*="display: block"] .t396,
-                .t-rec[style*="display: block"] .t396__artboard {
-                    animation: tilda-tablet-fix 0.01s;
-                }
-                
-                @keyframes tilda-tablet-fix {
-                    to { opacity: 0.999; }
-                }
-            }
-        `;
-
-        const style = document.createElement('style');
-        style.textContent = fixes;
-        document.head.appendChild(style);
-    }
-
-    setupEventListeners() {
-        document.addEventListener('click', (e) => {
-            const card = e.target.closest('.vacancy-card');
-            if (card) {
-                const key = decodeURIComponent(card.dataset.key);
-                const [title, project, department] = key.split('|');
-                const vac = this.state.allVacancies.find(v => 
-                    v.title === title && 
-                    (v.project || '') === (project || '') && 
-                    v.department === department
-                );
-                if (vac) this.showVacancyDetail(vac);
-            }
-        });
-
-        const searchInput = document.getElementById('vacancy-search');
-        if (searchInput) {
-            searchInput.addEventListener('input', e => {
-                this.state.currentQuery = e.target.value.toLowerCase();
-                this.renderResults();
-            });
-        }
-
-        const resetBtn = document.getElementById('reset-all-filters');
-        if (resetBtn) {
-            resetBtn.addEventListener('click', () => {
-                this.state.currentProject = [];
-                this.state.currentDepartment = [];
-                this.state.currentQuery = '';
-                const searchInput = document.getElementById('vacancy-search');
-                if (searchInput) searchInput.value = '';
-                this.renderFilters();
-                this.renderResults();
-            });
-        }
-
-        ['project-filter', 'department-filter'].forEach(id => {
-            const filter = document.getElementById(id);
-            if (!filter) return;
-            
-            const header = filter.querySelector('.select-header');
-            const dropdown = filter.querySelector('.select-dropdown');
-            const clearBtn = filter.querySelector('.clear-btn');
-
-            if (header) {
-                header.addEventListener('click', (e) => {
-                    e.stopPropagation();
-                    const isActive = filter.classList.contains('active');
-                    
-                    document.querySelectorAll('.custom-select').forEach(s => {
-                        if (s !== filter) {
-                            s.classList.remove('active');
-                            const otherDropdown = s.querySelector('.select-dropdown');
-                            if (otherDropdown) otherDropdown.style.display = 'none';
-                        }
-                    });
-                    
-                    filter.classList.toggle('active');
-                    if (dropdown) {
-                        dropdown.style.display = isActive ? 'none' : 'block';
-                    }
-                });
-            }
-
-            if (clearBtn) {
-                clearBtn.addEventListener('click', (e) => {
-                    e.stopPropagation();
-                    if (id === 'project-filter') {
-                        this.state.currentProject = [];
-                        filter.classList.remove('has-selection');
-                    }
-                    if (id === 'department-filter') {
-                        this.state.currentDepartment = [];
-                        filter.classList.remove('has-selection');
-                    }
-                    this.renderFilters();
-                    this.renderResults();
-                    this.updateClearButtonVisibility();
-                });
-            }
-
-            if (dropdown) {
-                dropdown.addEventListener('change', (e) => {
-                    if (e.target.type === 'checkbox') {
-                        const value = e.target.value;
-                        const isChecked = e.target.checked;
-                        
-                        if (id === 'project-filter') {
-                            if (isChecked) {
-                                if (!this.state.currentProject.includes(value)) {
-                                    this.state.currentProject.push(value);
-                                }
-                            } else {
-                                this.state.currentProject = this.state.currentProject.filter(v => v !== value);
-                            }
-                            if (this.state.currentProject.length > 0) {
-                                filter.classList.add('has-selection');
-                            } else {
-                                filter.classList.remove('has-selection');
-                            }
-                        } else {
-                            if (isChecked) {
-                                if (!this.state.currentDepartment.includes(value)) {
-                                    this.state.currentDepartment.push(value);
-                                }
-                            } else {
-                                this.state.currentDepartment = this.state.currentDepartment.filter(v => v !== value);
-                            }
-                            if (this.state.currentDepartment.length > 0) {
-                                filter.classList.add('has-selection');
-                            } else {
-                                filter.classList.remove('has-selection');
-                            }
-                        }
-                        this.renderFilters();
-                        this.renderResults();
-                        this.updateClearButtonVisibility();
-                    }
-                });
-            }
-        });
-
-        document.addEventListener('click', (e) => {
-            if (!e.target.closest('.custom-select')) {
-                document.querySelectorAll('.custom-select').forEach(select => {
-                    select.classList.remove('active');
-                    const dropdown = select.querySelector('.select-dropdown');
-                    if (dropdown) dropdown.style.display = 'none';
-                });
-            }
-        });
-
-        this.setupMobileFilters();
-
-        document.addEventListener('click', (e) => {
-            if (e.target.closest('.back-to-list-btn')) {
-                this.showVacancyList();
-            }
-        });
-
-        window.addEventListener('popstate', (e) => {
-            const urlParams = new URLSearchParams(window.location.search);
-            const title = urlParams.get('vacancy');
-            const project = urlParams.get('project') || '';
-            const dept = urlParams.get('dept');
-
-            if (title && this.state.allVacancies.length > 0) {
-                const vac = this.state.allVacancies.find(v => 
-                    v.title === title && 
-                    (v.project || '') === project && 
-                    v.department === dept
-                );
-                if (vac) {
-                    this.showVacancyDetail(vac);
-                    return;
-                }
-            }
-            this.showVacancyList();
-        });
-    }
-
-    setupMobileFilters() {
-        const mobileModal = document.getElementById('mobile-filters-modal');
-        const projectDropdown = document.getElementById('mobile-project-dropdown');
-        const deptDropdown = document.getElementById('mobile-dept-dropdown');
-
-        const mobileFiltersBtn = document.getElementById('mobile-filters-btn');
-        if (mobileFiltersBtn) {
-            mobileFiltersBtn.addEventListener('click', () => {
-                this.renderMobileFilters();
-                this.updateMobileApplyButton();
-                if (mobileModal) {
-                    mobileModal.style.display = 'block';
-                    setTimeout(() => {
-                        mobileModal.classList.add('active');
-                    }, 10);
-                }
-            });
-        }
-
-        document.addEventListener('click', (e) => {
-            if (mobileModal && mobileModal.style.display === 'block' && e.target === mobileModal) {
-                this.closeMobileFilters();
-            }
-        });
-
-        const clearMobileFilters = document.getElementById('clear-mobile-filters');
-        if (clearMobileFilters) {
-            clearMobileFilters.addEventListener('click', () => {
-                this.state.currentProject = [];
-                this.state.currentDepartment = [];
-                
-                const projectFilter = document.getElementById('project-filter');
-                const deptFilter = document.getElementById('department-filter');
-                if (projectFilter) projectFilter.classList.remove('has-selection');
-                if (deptFilter) deptFilter.classList.remove('has-selection');
-                
-                this.renderFilters();
-                this.renderResults();
-                this.updateMobileApplyButton();
-                this.updateClearButtonVisibility();
-            });
-        }
-
-        const applyMobileFilters = document.getElementById('apply-mobile-filters');
-        if (applyMobileFilters) {
-            applyMobileFilters.addEventListener('click', () => {
-                const hasFilters = this.state.currentProject.length > 0 || this.state.currentDepartment.length > 0;
-                
-                if (hasFilters) {
-                    this.renderFilters();
-                    this.renderResults();
-                    this.closeMobileFilters();
-                } else {
-                    this.closeMobileFilters();
-                }
-            });
-        }
-
-        document.querySelectorAll('.filter-item').forEach(item => {
-            item.addEventListener('click', () => {
-                const type = item.dataset.type;
-                if (type === 'projects' && projectDropdown) {
-                    projectDropdown.style.display = 'flex';
-                } else if (type === 'departments' && deptDropdown) {
-                    deptDropdown.style.display = 'flex';
-                }
-            });
-        });
-
-        document.querySelectorAll('.close-dropdown').forEach(btn => {
-            btn.addEventListener('click', () => {
-                if (projectDropdown) projectDropdown.style.display = 'none';
-                if (deptDropdown) deptDropdown.style.display = 'none';
-            });
-        });
-
-        document.addEventListener('change', (e) => {
-            if (e.target.type === 'checkbox' && 
-                (e.target.closest('#mobile-project-options') || e.target.closest('#mobile-dept-options'))) {
-                
-                const value = e.target.value;
-                const isProject = e.target.closest('#mobile-project-options');
-                
-                if (isProject) {
-                    if (e.target.checked) {
-                        if (!this.state.currentProject.includes(value)) this.state.currentProject.push(value);
-                    } else {
-                        this.state.currentProject = this.state.currentProject.filter(v => v !== value);
-                    }
-                } else {
-                    if (e.target.checked) {
-                        if (!this.state.currentDepartment.includes(value)) this.state.currentDepartment.push(value);
-                    } else {
-                        this.state.currentDepartment = this.state.currentDepartment.filter(v => v !== value);
-                    }
-                }
-                
-                const projectFilter = document.getElementById('project-filter');
-                const deptFilter = document.getElementById('department-filter');
-                
-                if (projectFilter) {
-                    if (this.state.currentProject.length > 0) {
-                        projectFilter.classList.add('has-selection');
-                    } else {
-                        projectFilter.classList.remove('has-selection');
-                    }
-                }
-                
-                if (deptFilter) {
-                    if (this.state.currentDepartment.length > 0) {
-                        deptFilter.classList.add('has-selection');
-                    } else {
-                        deptFilter.classList.remove('has-selection');
-                    }
-                }
-                
-                this.renderMobileFilters();
-                this.updateMobileApplyButton();
-                this.updateClearButtonVisibility();
-            }
-        });
-    }
-
-    initializeSupabase() {
-        if (window.supabase) {
-            this.state.supabase = window.supabase;
-            console.log('✅ Supabase инициализирован');
-            return true;
-        } else {
-            console.error('❌ Supabase JS не загружен');
-            return false;
-        }
-    }
-
-    getCachedData() {
-        try {
-            const storedData = localStorage.getItem(this.config.cacheKeys.data);
-            const timestamp = localStorage.getItem(this.config.cacheKeys.timestamp);
-            
-            if (!storedData || !timestamp) return null;
-            
-            const now = Date.now();
-            const cacheAge = now - parseInt(timestamp);
-            
-            if (cacheAge > this.config.cacheTTL) {
-                console.log('ℹ️ Кэш устарел, требуется обновление');
-                return null;
-            }
-            
-            const data = JSON.parse(storedData);
-            console.log('✅ Данные загружены из кэша:', data.vacancies?.length, 'вакансий');
-            return data.vacancies || [];
-            
-        } catch (error) {
-            console.error('❌ Ошибка чтения кэша:', error);
-            return null;
-        }
-    }
-
-    saveToCache(vacancies) {
-        try {
-            const data = {
-                vacancies: vacancies,
-                timestamp: Date.now()
-            };
-            
-            localStorage.setItem(this.config.cacheKeys.data, JSON.stringify(data));
-            localStorage.setItem(this.config.cacheKeys.timestamp, Date.now().toString());
-            
-            console.log('💾 Данные сохранены в кэш:', vacancies.length, 'вакансий');
-        } catch (error) {
-            console.error('❌ Ошибка сохранения в кэш:', error);
-        }
-    }
-
-    formatVacancyData(data) {
-        return {
-            id: data.id,
-            title: data.title || 'Без названия',
-            project_name: data.project_name || 'Без проекта',
-            project: data.project || data.project_name || 'Без проекта',
-            department: data.department || 'Без отдела',
-            description: data.description || '',
-            requirements: data.requirements || '',
-            responsibilities: data.responsibilities || '',
-            conditions: data.conditions || '',
-            format: data.format || 'Не указан',
-            status: data.status,
-            created_at: data.created_at
-        };
-    }
-
-    async loadFromSupabase() {
-        if (!this.state.supabase) {
-            if (!this.initializeSupabase()) {
-                throw new Error('Supabase не доступен');
-            }
-        }
-        
-        console.log('📡 Загрузка данных из Supabase...');
-        
-        const { data, error } = await this.state.supabase
-            .from('vacancies')
-            .select('*')
-            .eq('status', 'active')
-            .order('created_at', { ascending: false });
-        
-        if (error) {
-            console.error('❌ Ошибка Supabase:', error);
-            throw error;
-        }
-        
-        if (data && data.length > 0) {
-            const formattedVacancies = data.map(vacancy => this.formatVacancyData(vacancy));
-            
-            const currentCount = this.state.allVacancies.length;
-            const newCount = formattedVacancies.length;
-            
-            if (currentCount !== newCount || JSON.stringify(this.state.allVacancies) !== JSON.stringify(formattedVacancies)) {
-                this.state.allVacancies = formattedVacancies;
-                this.saveToCache(this.state.allVacancies);
-                this.calculateCounts();
-                
-                if (currentCount > 0) {
-                    console.log('🔄 Данные обновлены, перерисовываем интерфейс');
-                    this.updateInterface();
-                    this.showNotification('Данные обновлены', 'success');
-                } else {
-                    this.updateInterface();
-                }
-            } else {
-                console.log('✅ Данные актуальны, обновление не требуется');
-            }
-            
-            console.log('✅ Загружено из Supabase:', this.state.allVacancies.length, 'вакансий');
-            
-            if (!this.state.realtimeSubscription) {
-                this.startRealtimeSubscription();
-            }
-            
-        } else {
-            console.log('ℹ️ В Supabase нет вакансий');
-            this.state.allVacancies = [];
-            this.saveToCache([]);
-            this.updateInterface();
-        }
-        
-        this.hideLoader();
-    }
-
-    calculateCounts() {
-        this.state.projectCounts = {};
-        this.state.allVacancies.forEach(vacancy => {
-            const project = vacancy.project || 'Без проекта';
-            this.state.projectCounts[project] = (this.state.projectCounts[project] || 0) + 1;
-        });
-        
-        this.state.deptCounts = {};
-        this.state.allVacancies.forEach(vacancy => {
-            const dept = vacancy.department || 'Без отдела';
-            this.state.deptCounts[dept] = (this.state.deptCounts[dept] || 0) + 1;
-        });
-    }
-
-    startRealtimeSubscription() {
-        if (!this.state.supabase || this.state.realtimeSubscription) return;
-        
-        try {
-            this.state.realtimeSubscription = this.state.supabase
-                .channel('vacancies-changes')
-                .on(
-                    'postgres_changes',
-                    {
-                        event: '*',
-                        schema: 'public',
-                        table: 'vacancies'
-                    },
-                    (payload) => {
-                        console.log('🔔 Realtime обновление:', payload.eventType, payload.new);
-                        this.handleRealtimeUpdate(payload);
-                    }
-                )
-                .subscribe((status) => {
-                    if (status === 'SUBSCRIBED') {
-                        console.log('✅ Realtime подписка активна');
-                    } else if (status === 'CHANNEL_ERROR') {
-                        console.error('❌ Ошибка realtime подписки');
-                    }
-                });
-                
-        } catch (error) {
-            console.error('❌ Ошибка инициализации realtime:', error);
-        }
-    }
-
-    handleRealtimeUpdate(payload) {
-        const { eventType, new: newData, old: oldData } = payload;
-        
-        switch (eventType) {
-            case 'INSERT':
-                if (newData.status === 'active') {
-                    const newVacancy = this.formatVacancyData(newData);
-                    this.state.allVacancies.unshift(newVacancy);
-                    this.saveToCache(this.state.allVacancies);
-                    this.calculateCounts();
-                    this.updateInterface();
-                    this.showNotification('Добавлена новая вакансия', 'success');
-                }
-                break;
-                
-            case 'UPDATE':
-                const index = this.state.allVacancies.findIndex(v => v.id === newData.id);
-                if (index !== -1) {
-                    if (newData.status === 'active') {
-                        this.state.allVacancies[index] = this.formatVacancyData(newData);
-                    } else {
-                        this.state.allVacancies.splice(index, 1);
-                    }
-                    this.saveToCache(this.state.allVacancies);
-                    this.calculateCounts();
-                    this.updateInterface();
-                    this.showNotification('Вакансия обновлена', 'info');
-                }
-                break;
-                
-            case 'DELETE':
-                const deleteIndex = this.state.allVacancies.findIndex(v => v.id === oldData.id);
-                if (deleteIndex !== -1) {
-                    this.state.allVacancies.splice(deleteIndex, 1);
-                    this.saveToCache(this.state.allVacancies);
-                    this.calculateCounts();
-                    this.updateInterface();
-                    this.showNotification('Вакансия удалена', 'info');
-                }
-                break;
-        }
-    }
-
-    async loadVacanciesData() {
-        this.showLoader();
-        
-        try {
-            const cachedVacancies = this.getCachedData();
-            if (cachedVacancies && cachedVacancies.length > 0) {
-                this.state.allVacancies = cachedVacancies;
-                this.calculateCounts();
-                this.updateInterface();
-                this.hideLoader();
-            }
-            
-            await this.loadFromSupabase();
-            
-        } catch (error) {
-            console.error('❌ Ошибка загрузки данных:', error);
-            
-            if (this.state.allVacancies.length === 0) {
-                const cached = this.getCachedData();
-                if (cached && cached.length > 0) {
-                    this.state.allVacancies = cached;
-                    this.calculateCounts();
-                    this.updateInterface();
-                    this.showNotification('Используем кэшированные данные', 'info');
-                } else {
-                    this.showError('Не удалось загрузить вакансии');
-                }
-            }
-            
-            this.hideLoader();
-        }
-    }
-
-    showLoader() {
-        const spinner = document.getElementById('loading-spinner');
-        if (spinner) spinner.style.display = 'flex';
-        const results = document.getElementById('vacancy-results');
-        if (results) results.style.display = 'none';
-    }
-
-    hideLoader() {
-        const spinner = document.getElementById('loading-spinner');
-        if (spinner) spinner.style.display = 'none';
-        const results = document.getElementById('vacancy-results');
-        if (results) results.style.display = 'block';
-    }
-
-    showNotification(message, type = 'info') {
-        const notification = document.createElement('div');
-        notification.style.cssText = `
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            padding: 12px 20px;
-            border-radius: 8px;
-            color: white;
-            z-index: 10000;
-            font-family: 'ALSHaussNext', sans-serif;
-            font-size: 14px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-            transition: all 0.3s ease;
-            max-width: 300px;
-        `;
-        
-        const colors = {
-            success: '#27ae60',
-            error: '#e74c3c',
-            info: '#3498db',
-            warning: '#f39c12'
-        };
-        
-        notification.style.background = colors[type] || colors.info;
-        notification.textContent = message;
-        
-        document.body.appendChild(notification);
-        
-        setTimeout(() => {
-            notification.style.opacity = '0';
-            notification.style.transform = 'translateX(100px)';
-            setTimeout(() => {
-                if (notification.parentNode) {
-                    notification.parentNode.removeChild(notification);
-                }
-            }, 300);
-        }, 3000);
-    }
-
-    showError(message) {
-        const results = document.getElementById('vacancy-results');
-        if (results) {
-            results.innerHTML = `
-                <div style="text-align:center; padding: 40px 20px; color: #666;">
-                    <div style="font-size: 48px; margin-bottom: 16px;">⚠️</div>
-                    <h3 style="margin: 0 0 8px 0; color: #333;">${message}</h3>
-                    <p style="margin: 0; opacity: 0.7;">Попробуйте обновить страницу</p>
-                    <button onclick="window.vacancyApp.loadVacanciesData()" style="
-                        margin-top: 20px;
-                        padding: 12px 24px;
-                        background: #048868;
-                        color: white;
-                        border: none;
-                        border-radius: 6px;
-                        cursor: pointer;
-                        font-family: 'ALSHaussNext', sans-serif;
-                    ">Обновить</button>
-                </div>
-            `;
-        }
-    }
-
-    updateInterface() {
-        if (this.state.allVacancies.length === 0) {
-            const results = document.getElementById('vacancy-results');
-            if (results) {
-                results.innerHTML = `
-                    <div style="text-align:center; padding: 60px 20px; color: #666;">
-                        <div style="font-size: 48px; margin-bottom: 16px;">😔</div>
-                        <h3 style="margin: 0 0 8px 0; color: #333;">Нет активных вакансий</h3>
-                        <p style="margin: 0; opacity: 0.7;">Свяжитесь с HR-отделом для уточнения</p>
-                    </div>
-                `;
-            }
-            return;
-        }
-
-        const input = document.getElementById('vacancy-search');
-        if (input && this.state.allVacancies.length > 0) {
-            const titles = this.state.allVacancies.map(v => v.title).filter(t => t && t.trim());
-            let i = 0;
-            const update = () => {
-                input.placeholder = titles[i] || 'Название вакансии';
-                i = (i + 1) % (titles.length || 1);
-            };
-            if (titles.length > 0) {
-                update();
-                if (this.state.placeholderInterval) clearInterval(this.state.placeholderInterval);
-                this.state.placeholderInterval = setInterval(update, 1000);
-            }
-        }
-
-        const urlParams = new URLSearchParams(window.location.search);
-        const title = urlParams.get('vacancy');
-        const project = urlParams.get('project') || '';
-        const dept = urlParams.get('dept');
-
-        if (title && this.state.allVacancies.length > 0) {
-            const vac = this.state.allVacancies.find(v => 
-                v.title === title && 
-                (v.project || '') === project && 
-                v.department === dept
-            );
-            if (vac) {
-                setTimeout(() => {
-                    this.showVacancyDetail(vac);
-                }, 100);
-                return;
-            }
-        }
-
-        const vacancyContainer = document.querySelector('.vacancy-container');
-        if (vacancyContainer) vacancyContainer.style.display = 'block';
-        
-        this.renderFilters();
-        this.renderResults();
-        this.updateClearButtonVisibility();
-    }
-
-    getAvailableProjects(selectedDepts = []) {
-        const projects = {};
-        this.state.allVacancies.forEach(v => {
-            const d = v.department;
-            const p = v.project || 'Без проекта';
-            if (selectedDepts.length === 0 || selectedDepts.includes(d)) {
-                projects[p] = (projects[p] || 0) + 1;
-            }
-        });
-        return projects;
-    }
-
-    getAvailableDepartments(selectedProjects = []) {
-        const depts = {};
-        this.state.allVacancies.forEach(v => {
-            const p = v.project || 'Без проекта';
-            const d = v.department;
-            if (selectedProjects.length === 0 || selectedProjects.includes(p)) {
-                depts[d] = (depts[d] || 0) + 1;
-            }
-        });
-        return depts;
-    }
-
-    renderFilters() {
-        console.log('🎛️ Rendering filters...');
-        
-        const projects = this.getAvailableProjects(this.state.currentDepartment);
-        const depts = this.getAvailableDepartments(this.state.currentProject);
-        
-        const projectFilter = document.getElementById('project-filter');
-        const deptFilter = document.getElementById('department-filter');
-        
-        if (projectFilter) {
-            const projDropdown = projectFilter.querySelector('.select-dropdown');
-            const projValues = projectFilter.querySelector('.selected-values');
-            
-            if (projDropdown) {
-                projDropdown.innerHTML = Object.entries(projects)
-                    .sort(([a], [b]) => a.localeCompare(b))
-                    .map(([project, count]) => {
-                        const checked = this.state.currentProject.includes(project) ? 'checked' : '';
-                        return `
-                            <div class="select-option">
-                                <input type="checkbox" value="${project}" ${checked} id="proj-${project.replace(/\s+/g, '-')}">
-                                <label for="proj-${project.replace(/\s+/g, '-')}">
-                                    ${project} <span class="option-count">(${count})</span>
-                                </label>
-                            </div>
-                        `;
-                    }).join('');
-            }
-            
-            if (projValues) {
-                if (this.state.currentProject.length > 0) {
-                    projValues.textContent = this.state.currentProject.join(', ');
-                    projectFilter.classList.add('has-selection');
-                } else {
-                    projValues.textContent = 'Все проекты';
-                    projectFilter.classList.remove('has-selection');
-                }
-            }
-        }
-        
-        if (deptFilter) {
-            const deptDropdown = deptFilter.querySelector('.select-dropdown');
-            const deptValues = deptFilter.querySelector('.selected-values');
-            
-            if (deptDropdown) {
-                deptDropdown.innerHTML = Object.entries(depts)
-                    .sort(([a], [b]) => a.localeCompare(b))
-                    .map(([dept, count]) => {
-                        const checked = this.state.currentDepartment.includes(dept) ? 'checked' : '';
-                        return `
-                            <div class="select-option">
-                                <input type="checkbox" value="${dept}" ${checked} id="dept-${dept.replace(/\s+/g, '-')}">
-                                <label for="dept-${dept.replace(/\s+/g, '-')}">
-                                    ${dept} <span class="option-count">(${count})</span>
-                                </label>
-                            </div>
-                        `;
-                    }).join('');
-            }
-            
-            if (deptValues) {
-                if (this.state.currentDepartment.length > 0) {
-                    deptValues.textContent = this.state.currentDepartment.join(', ');
-                    deptFilter.classList.add('has-selection');
-                } else {
-                    deptValues.textContent = 'Все подразделения';
-                    deptFilter.classList.remove('has-selection');
-                }
-            }
-        }
-        
-        this.renderMobileFilters();
-        this.updateResetButtonVisibility();
-        this.updateMobileApplyButton();
-        this.updateClearButtonVisibility();
-    }
-
-    renderMobileFilters() {
-        const projects = this.getAvailableProjects(this.state.currentDepartment);
-        const depts = this.getAvailableDepartments(this.state.currentProject);
-        
-        const projContainer = document.getElementById('mobile-project-options');
-        if (projContainer) {
-            projContainer.innerHTML = Object.entries(projects)
-                .sort(([a], [b]) => a.localeCompare(b))
-                .map(([project, count]) => {
-                    const checked = this.state.currentProject.includes(project) ? 'checked' : '';
-                    const id = `mob-proj-${project.replace(/\s+/g, '-')}`;
-                    return `
-                        <label class="mobile-filter-option">
-                            <input type="checkbox" value="${project}" ${checked} id="${id}">
-                            <span>
-                                ${project} <span class="option-count">(${count})</span>
-                            </span>
-                        </label>
-                    `;
-                }).join('');
-        }
-        
-        const deptContainer = document.getElementById('mobile-dept-options');
-        if (deptContainer) {
-            deptContainer.innerHTML = Object.entries(depts)
-                .sort(([a], [b]) => a.localeCompare(b))
-                .map(([dept, count]) => {
-                    const checked = this.state.currentDepartment.includes(dept) ? 'checked' : '';
-                    const id = `mob-dept-${dept.replace(/\s+/g, '-')}`;
-                    return `
-                        <label class="mobile-filter-option">
-                            <input type="checkbox" value="${dept}" ${checked} id="${id}">
-                            <span>
-                                ${dept} <span class="option-count">(${count})</span>
-                            </span>
-                        </label>
-                    `;
-                }).join('');
-        }
-        
-        const projectValue = document.querySelector('.filter-item[data-type="projects"] .filter-value');
-        const deptValue = document.querySelector('.filter-item[data-type="departments"] .filter-value');
-        
-        if (projectValue) {
-            projectValue.textContent = this.state.currentProject.length ? 
-                this.state.currentProject.join(', ') : 'Все проекты';
-        }
-        if (deptValue) {
-            deptValue.textContent = this.state.currentDepartment.length ? 
-                this.state.currentDepartment.join(', ') : 'Все подразделения';
-        }
-    }
-
-    renderResults() {
-        const results = document.getElementById('vacancy-results');
-        if (!results) {
-            console.error('❌ Element #vacancy-results not found!');
-            return;
-        }
-        
-        console.log('📄 Rendering results...');
-        
-        if (this.state.allVacancies.length === 0) {
-            results.innerHTML = '<p style="text-align:center;color:#999;padding:40px 0;">Нет доступных вакансий</p>';
-            return;
-        }
-        
-        const filtered = this.state.allVacancies.filter(vac => {
-            const byProject = this.state.currentProject.length === 0 || 
-                this.state.currentProject.includes(vac.project || 'Без проекта');
-            const byDept = this.state.currentDepartment.length === 0 || 
-                this.state.currentDepartment.includes(vac.department);
-            const bySearch = this.state.currentQuery === '' || 
-                (vac.title && vac.title.toLowerCase().includes(this.state.currentQuery)) || 
-                (vac.description && vac.description.toLowerCase().includes(this.state.currentQuery));
-            
-            return byProject && byDept && bySearch;
-        });
-        
-        console.log(`Filtered vacancies: ${filtered.length} out of ${this.state.allVacancies.length}`);
-        
-        if (filtered.length === 0) {
-            results.innerHTML = `
-                <div style="text-align:center;color:#999;padding:40px 0;">
-                    <p>Вакансий не найдено</p>
-                    <p style="font-size:14px;margin-top:8px;">Попробуйте изменить параметры поиска</p>
-                </div>
-            `;
-            this.updateResetButtonVisibility();
-            this.updateMobileApplyButton();
-            this.updateClearButtonVisibility();
-            return;
-        }
-        
-        const groupedByDept = {};
-        filtered.forEach(vac => {
-            const dept = vac.department || 'Без отдела';
-            if (!groupedByDept[dept]) groupedByDept[dept] = [];
-            groupedByDept[dept].push(vac);
-        });
-        
-        const html = Object.keys(groupedByDept)
-            .sort()
-            .map(dept => {
-                const deptVacancies = groupedByDept[dept];
-                const count = deptVacancies.length;
-                const deptTitle = dept.charAt(0).toUpperCase() + dept.slice(1);
-                
-                return `
-                    <h2 class="department-header">${deptTitle} <span class="dept-count">${count}</span></h2>
-                    ${deptVacancies.map(vac => {
-                        const project = vac.project || 'Без проекта';
-                        const key = `${vac.title}|${vac.project || ''}|${vac.department}`;
-                        
-                        return `
-                            <div class="vacancy-card-wrapper">
-                                <div class="vacancy-card" data-key="${encodeURIComponent(key)}">
-                                    <div class="vacancy-content">
-                                        <h3>${vac.title}</h3>
-                                        <p class="vacancy-meta">${project} — ${vac.department}</p>
-                                    </div>
-                                    <span class="arrow-icon">→</span>
-                                </div>
-                            </div>
-                        `;
-                    }).join('')}
-                `;
-            })
-            .join('');
-        
-        results.innerHTML = html;
-        
-        this.updateResetButtonVisibility();
-        this.updateMobileApplyButton();
-        this.updateClearButtonVisibility();
-    }
-
-    updateResetButtonVisibility() {
-        const hasFilters = this.state.currentProject.length > 0 || 
-                          this.state.currentDepartment.length > 0 || 
-                          this.state.currentQuery.trim();
-        const resetBtn = document.getElementById('reset-all-filters');
-        if (resetBtn) resetBtn.style.display = hasFilters ? 'block' : 'none';
-    }
-
-    updateMobileApplyButton() {
-        const applyBtn = document.getElementById('apply-mobile-filters');
-        if (!applyBtn) return;
-        
-        const hasFilters = this.state.currentProject.length > 0 || this.state.currentDepartment.length > 0;
-        
-        if (hasFilters) {
-            applyBtn.textContent = 'Показать';
-            applyBtn.style.background = '#048868';
-        } else {
-            applyBtn.textContent = 'Отменить';
-            applyBtn.style.background = '#666';
-        }
-    }
-
-    updateClearButtonVisibility() {
-        const clearBtn = document.querySelector('.filter-clear-btn');
-        
-        const hasSelection = this.state.currentProject.length > 0 || 
-                             this.state.currentDepartment.length > 0;
-        
-        if (clearBtn) {
-            if (hasSelection) {
-                clearBtn.classList.add('visible');
-            } else {
-                clearBtn.classList.remove('visible');
-            }
-        }
-    }
-
-    closeMobileFilters() {
-        const mobileModal = document.getElementById('mobile-filters-modal');
-        if (mobileModal) {
-            mobileModal.classList.remove('active');
-            setTimeout(() => {
-                mobileModal.style.display = 'none';
-            }, 300);
-        }
-    }
-
-    // ========== ОБНОВЛЕННЫЙ МЕТОД showVacancyDetail С АРХИТЕКТУРНЫМ ФИКСОМ ==========
-    showVacancyDetail(vacancy) {
-        sessionStorage.setItem('vacancyListScroll', window.scrollY);
-        sessionStorage.setItem('vacancyListHTML', document.getElementById('vacancy-results').innerHTML);
-        sessionStorage.setItem('vacancyListFilters', JSON.stringify({
-            project: this.state.currentProject,
-            department: this.state.currentDepartment,
-            query: this.state.currentQuery
-        }));
-        
-        this.state.currentVacancy = vacancy;
-        window.scrollTo(0, 0);
-        
-        const vacancyContainer = document.querySelector('.vacancy-container');
-        if (vacancyContainer) vacancyContainer.style.display = 'none';
-        
-        const headerBlock = document.getElementById('rec1480064551');
-        if (headerBlock) headerBlock.style.display = 'none';
-        
-        const secondBlock = document.getElementById('rec1475773601');
-        if (secondBlock) secondBlock.style.display = 'none';
-        
-        const detailBlocks = [
-            'rec1480130241',
-            'rec1480130251',
-            'rec1480130271',
-            'rec1480130281',
-            'rec1480348491',
-            'rec1480130341',
-            'rec1513289611'
-        ];
-        
-        let foundAny = false;
-        detailBlocks.forEach(id => {
-            const block = document.getElementById(id);
-            if (block) {
-                block.style.display = 'block';
-                foundAny = true;
-            }
-        });
-        
-        if (!foundAny) {
-            console.log('Ни один детальный блок не найден!');
-            return;
-        }
-        
-        const titleEl = document.querySelector('.vacancy-title');
-        if (titleEl) {
-            titleEl.textContent = vacancy.title || 'Не указано';
-            titleEl.style.fontFamily = 'ALSHaussNext, sans-serif';
-            titleEl.style.fontSize = '48px';
-            titleEl.style.fontWeight = '700';
-            titleEl.style.color = '#ffffff';
-        }
-        
-        const descEl = document.querySelector('.vacancy-description');
-        if (descEl) descEl.innerHTML = vacancy.description || 'Не указано';
-        
-        const reqEl = document.querySelector('.vacancy-requirements');
-        if (reqEl) reqEl.innerHTML = vacancy.requirements || 'Не указано';
-        
-        const respEl = document.querySelector('.vacancy-responsibilities');
-        if (respEl) respEl.innerHTML = vacancy.responsibilities || 'Не указано';
-        
-        const condEl = document.querySelector('.vacancy-conditions');
-        if (condEl) condEl.innerHTML = vacancy.conditions || 'Не указано';
-        
-        // 🔥 АРХИТЕКТУРНЫЙ ФИКС ДЛЯ ПЛАНШЕТОВ: вызываем принудительный рерандер Tilda
-        this.forceTildaAdaptiveReflow();
-        
-        // Обновляем аккордеон Tilda
-        setTimeout(() => {
-            this.updateTildaAccordion();
-        }, 100);
-        
-        const newUrl = `${window.location.pathname}?vacancy=${encodeURIComponent(vacancy.title)}&project=${encodeURIComponent(vacancy.project || '')}&dept=${encodeURIComponent(vacancy.department)}`;
-        history.pushState({ vacancy }, '', newUrl);
-    }
-
-    showVacancyList() {
-        const savedHTML = sessionStorage.getItem('vacancyListHTML');
-        if (savedHTML) {
-            const savedFilters = JSON.parse(sessionStorage.getItem('vacancyListFilters'));
-            
-            this.state.currentProject = savedFilters.project;
-            this.state.currentDepartment = savedFilters.department;
-            this.state.currentQuery = savedFilters.query;
-            
-            document.getElementById('vacancy-results').innerHTML = savedHTML;
-            
-            const searchInput = document.getElementById('vacancy-search');
-            if (searchInput) searchInput.value = this.state.currentQuery;
-            
-            this.renderFilters();
-            
-            const savedScroll = sessionStorage.getItem('vacancyListScroll');
-            if (savedScroll) {
-                window.scrollTo(0, parseInt(savedScroll));
-            }
-            
-            sessionStorage.removeItem('vacancyListHTML');
-            sessionStorage.removeItem('vacancyListScroll');
-            sessionStorage.removeItem('vacancyListFilters');
-            
-        } else {
-            this.renderResults();
-        }
-        
-        const headerBlock = document.getElementById('rec1480064551');
-        if (headerBlock) headerBlock.style.display = 'block';
-        
-        const secondBlock = document.getElementById('rec1475773601');
-        if (secondBlock) secondBlock.style.display = 'block';
-        
-        const detailBlocks = [
-            'rec1480130241',
-            'rec1480130251',
-            'rec1480130271',
-            'rec1480130281',
-            'rec1480130341',
-            'rec1513289611'
-        ];
-        detailBlocks.forEach(id => {
-            const block = document.getElementById(id);
-            if (block) block.style.display = 'none';
-        });
-        
-        const vacancyContainer = document.querySelector('.vacancy-container');
-        if (vacancyContainer) vacancyContainer.style.display = 'block';
-        
-        history.pushState(null, '', window.location.pathname);
-    }
-
-    updateTildaAccordion() {
-        const accordionBlock = document.getElementById('rec1513289611');
-        if (!accordionBlock) {
-            console.log('❌ Аккордеон rec1513289611 не найден');
-            return;
-        }
-        
-        console.log('✅ Найден аккордеон Tilda:', accordionBlock);
-        
-        const accordionContents = [
-            document.getElementById('accordion1_1513289611'),
-            document.getElementById('accordion2_1513289611'), 
-            document.getElementById('accordion3_1513289611')
-        ];
-        
-        console.log('Найдено контентных блоков:', accordionContents.filter(Boolean).length);
-        
-        if (accordionContents.filter(Boolean).length >= 3 && this.state.currentVacancy) {
-            this.updateAccordionContent(accordionContents[0], this.state.currentVacancy.requirements, 'requirements');
-            this.updateAccordionContent(accordionContents[1], this.state.currentVacancy.responsibilities, 'responsibilities');
-            this.updateAccordionContent(accordionContents[2], this.state.currentVacancy.conditions, 'conditions');
-            
-            console.log('✅ Аккордеон Tilda обновлен динамическими данными');
-        } else {
-            console.log('❌ Не удалось обновить аккордеон: недостаточно элементов или нет данных вакансии');
-        }
-    }
-
-    updateAccordionContent(accordionContent, content, dataType) {
-        if (!accordionContent) {
-            console.log(`❌ Контентный блок для ${dataType} не найден`);
-            return;
-        }
-        
-        const textElement = accordionContent.querySelector('.t668__text');
-        
-        if (textElement && this.state.currentVacancy) {
-            const formattedContent = this.formatAccordionContent(content, dataType);
-            textElement.innerHTML = formattedContent;
-            console.log(`✅ Обновлен ${dataType}`);
-        } else {
-            console.log(`❌ Не найден текстовый элемент для ${dataType}`);
-        }
-    }
-
-    formatAccordionContent(content, dataType) {
-        if (!content || content === 'Не указано') {
-            return '<p>Информация не указана</p>';
-        }
-        
-        if (content.includes('<') && content.includes('>')) {
-            return this.ensureListStyling(content);
-        }
-        
-        const paragraphs = content.split('\n').filter(p => p.trim());
-        if (paragraphs.length === 0) return '<p>Информация не указана</p>';
-        
-        if (paragraphs.length === 1) {
-            return `<p>${paragraphs[0].trim()}</p>`;
-        }
-        
-        const listItems = paragraphs.map(p => `<li>${p.trim()}</li>`).join('');
-        
-        return `<ul>${listItems}</ul>`;
-    }
-
-    ensureListStyling(html) {
-        return html
-            .replace(/<ul>/g, '<ul>')
-            .replace(/<li>/g, '<li>');
-    }
-
-    initializeFormAnimation() {
-        const buttonBlock = document.getElementById('rec1480130341');
-        const formBlock = document.getElementById('rec1479156901');
-        
-        if (!buttonBlock || !formBlock) {
-            console.log('❌ Блоки для анимации не найдены');
-            return;
-        }
-        
-        console.log('✅ Блоки найдены');
-        
-        let openButton = null;
-        
-        const findElementWithText = (element, text) => {
-            if (element.textContent?.trim() === text || element.textContent?.includes(text)) {
-                return element;
-            }
-            
-            for (let child of element.children) {
-                const found = findElementWithText(child, text);
-                if (found) return found;
-            }
-            
-            return null;
-        };
-        
-        openButton = findElementWithText(buttonBlock, 'Давай!');
-        
-        if (!openButton) {
-            console.log('❌ Элемент с текстом "Давай!" не найден, используем весь блок');
-            openButton = buttonBlock;
-        } else {
-            console.log('✅ Найден элемент с текстом "Давай!":', openButton);
-        }
-        
-        const style = document.createElement('style');
-        style.textContent = `
-            #rec1480130341 .vacancy-form-btn,
-            #rec1480130341[data-is-button="true"] {
-                cursor: pointer !important;
-            }
-            #rec1480130341 .vacancy-form-btn:hover,
-            #rec1480130341[data-is-button="true"]:hover {
-                opacity: 0.9;
-            }
-        `;
-        document.head.appendChild(style);
-        
-        if (openButton === buttonBlock) {
-            openButton.setAttribute('data-is-button', 'true');
-        } else {
-            openButton.classList.add('vacancy-form-btn');
-        }
-        
-        formBlock.classList.remove('form-active');
-        buttonBlock.classList.remove('button-hidden');
-        
-        openButton.addEventListener('click', function(e) {
-            if (e.target.closest('.vacancy-card')) {
-                return;
-            }
-            
-            e.preventDefault();
-            e.stopPropagation();
-            
-            console.log('📝 Открываем форму');
-            
-            formBlock.classList.add('form-active');
-            buttonBlock.classList.add('button-hidden');
-            
-            setTimeout(() => {
-                const formRect = formBlock.getBoundingClientRect();
-                const absoluteFormTop = formRect.top + window.pageYOffset;
-                
-                window.scrollTo({
-                    top: absoluteFormTop - 50,
-                    behavior: 'smooth'
-                });
-            }, 100);
-            
-            return false;
-        });
-    }
-
-} // ← Закрывающая скобка класса
-
-// ========== СОЗДАНИЕ ЭКЗЕМПЛЯРА ВНЕ КЛАССА ==========
-window.vacancyApp = new VacancyApp();
+    renderResults();
+  });
+}
+
+if (resetAllBtn) {
+  resetAllBtn.addEventListener('click', () => {
+    currentFilters.projects = [];
+    currentFilters.departments = [];
+    currentQuery = '';
+    if (inputSearch) inputSearch.value = '';
+    renderFilters();
+    renderResults();
+  });
+}
+
+// ==========================
+// Инициализация
+// ==========================
+document.addEventListener('DOMContentLoaded', () => {
+  loadVacancies();
+});
