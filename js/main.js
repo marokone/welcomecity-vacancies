@@ -1096,6 +1096,20 @@ class VacancyApp {
     
     setTimeout(() => {
         this.updateTildaAccordion();
+        
+        // +++ МИНИМАЛЬНЫЙ ТРИГГЕР ДЛЯ TILDA +++
+        // Даем Tilda время на обработку аккордеона
+        setTimeout(() => {
+            // Триггерим мягкий reflow для всей страницы
+            // Это может помочь Tilda пересчитать позиции динамически показанных блоков
+            document.body.style.transform = 'translateZ(0)';
+            void document.body.offsetHeight; // Принудительный reflow
+            document.body.style.transform = '';
+            
+            console.log('✅ Tilda reflow triggered');
+        }, 150);
+        // +++ КОНЕЦ ДОБАВЛЕНИЯ +++
+        
     }, 300);
     
     const newUrl = `${window.location.pathname}?vacancy=${encodeURIComponent(vacancy.title)}&project=${encodeURIComponent(vacancy.project || '')}&dept=${encodeURIComponent(vacancy.department)}`;
