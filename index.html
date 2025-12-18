@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Welcome City Вакансии</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 0; padding: 20px; background: #f5f5f5; }
+        .container { max-width: 800px; margin: 0 auto; background: white; padding: 30px; border-radius: 12px; }
+        .loader { text-align: center; padding: 40px; }
+        .spinner { width: 40px; height: 40px; border: 4px solid #f3f3f3; border-top: 4px solid #048868; border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 20px; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Welcome City - Вакансии</h1>
+        
+        <div id="vacancy-app-loader" class="loader">
+            <div class="spinner"></div>
+            <p>Загружаем модули...</p>
+        </div>
+        
+        <div id="vacancy-app-container" style="display: none;"></div>
+        
+        <div id="status" style="margin-top: 20px; padding: 15px; background: #f8f9fa; border-radius: 8px; font-family: monospace; font-size: 14px;"></div>
+    </div>
+
+    <script type="module">
+        const status = document.getElementById('status');
+        
+        function updateStatus(msg, isError = false) {
+            const color = isError ? 'red' : 'green';
+            status.innerHTML += `<div style="color: ${color}">${new Date().toLocaleTimeString()}: ${msg}</div>`;
+            console.log(msg);
+        }
+
+        async function loadApp() {
+            updateStatus('🚀 Запуск приложения...');
+            
+            const modules = [
+                './js/config.js',
+                './js/utils.js',
+                './js/supabase-client.js',
+                './js/ui-components.js', 
+                './js/filter-system.js',
+                './js/main.js'
+            ];
+            
+            for (const modulePath of modules) {
+                try {
+                    updateStatus(`📦 Загрузка: ${modulePath}`);
+                    
+                    // Загружаем модуль
+                    const module = await import(modulePath);
+                    
+                    // Инициализируем
+                    await module.default.init();
+                    
+                    updateStatus(`✅ Успешно: ${modulePath}`);
+                    
+                } catch (error) {
+                    updateStatus(`❌ Ошибка: ${modulePath} - ${error.message}`, true);
+                    return; // Останавливаем при ошибке
+                }
+            }
+            
+            updateStatus('🎉 Все модули загружены! Приложение готово.');
+        }
+
+        // Запускаем когда страница загружена
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', loadApp);
+        } else {
+            loadApp();
+        }
+    </script>
+</body>
+</html>
