@@ -1,0 +1,152 @@
+<!-- ТОЛЬКО HTML структура -->
+<div class="vacancy-container" id="vacancy-container">
+  <div class="search-wrapper">
+    <div class="search-input-container">
+      <img 
+        src="https://static.tildacdn.com/tild6539-3930-4163-a162-316338356335/search_icon.svg" 
+        class="search-icon" 
+        alt="Поиск"
+        style="width: 24px; height: 24px; max-width: 24px;">
+      <input type="text" id="vacancy-search" placeholder="">
+    </div>
+    <p class="search-hint">Напишите направление, специализацию или название вакансии</p>
+  </div>
+
+  <!-- Десктопные фильтры -->
+  <div class="filters-row" id="desktop-filters">
+    <div class="custom-select" id="project-filter">
+      <div class="select-header">
+        <span class="selected-values">Все проекты</span>
+        <div class="select-controls">
+          <span class="clear-btn">×</span>
+          <span class="arrow-btn">▼</span>
+        </div>
+      </div>
+      <div class="select-dropdown"></div>
+    </div>
+
+    <div class="custom-select" id="department-filter">
+      <div class="select-header">
+        <span class="selected-values">Все подразделения</span>
+        <div class="select-controls">
+          <span class="clear-btn">×</span>
+          <span class="arrow-btn">▼</span>
+        </div>
+      </div>
+      <div class="select-dropdown"></div>
+    </div>
+  </div>
+
+  <!-- Мобильная кнопка фильтров -->
+  <div class="mobile-filters-container">
+    <button id="mobile-filters-btn" class="mobile-filters-btn">Фильтры</button>
+  </div>
+
+  <button id="reset-all-filters" class="reset-btn" style="display: none;">× Сбросить всё</button>
+
+  <div id="loading-spinner">
+    <div class="spinner-circle">Загружаем вакансии</div>
+  </div>
+
+  <div id="vacancy-results"></div>
+</div>
+
+<!-- Модальное окно фильтров для мобильных -->
+<div class="mobile-filters-modal" id="mobile-filters-modal">
+  <div class="mobile-filters-content">
+    <div class="mobile-filters-header">
+      <h3>Фильтры</h3>
+      <button id="clear-mobile-filters" class="filter-clear-btn">Очистить</button>
+    </div>
+    <div class="mobile-filter-list">
+      <div class="filter-item" data-type="projects">
+        <span class="filter-label">Направление</span>
+        <span class="filter-value">Все проекты</span>
+        <span class="filter-arrow">→</span>
+      </div>
+      <div class="filter-item" data-type="departments">
+        <span class="filter-label">Подразделение</span>
+        <span class="filter-value">Все подразделения</span>
+        <span class="filter-arrow">→</span>
+      </div>
+    </div>
+    <div class="mobile-filters-actions">
+      <button id="apply-mobile-filters" class="apply-btn">Показать</button>
+    </div>
+  </div>
+</div>
+
+<!-- Выпадающие списки для мобильных -->
+<div class="mobile-filter-dropdown" id="mobile-project-dropdown" style="display:none;">
+  <div class="dropdown-header">
+    <span>Направление</span>
+    <span class="close-dropdown">×</span>
+  </div>
+  <div class="mobile-filter-options" id="mobile-project-options"></div>
+</div>
+
+<div class="mobile-filter-dropdown" id="mobile-dept-dropdown" style="display:none;">
+  <div class="dropdown-header">
+    <span>Подразделение</span>
+    <span class="close-dropdown">×</span>
+  </div>
+  <div class="mobile-filter-options" id="mobile-dept-options"></div>
+</div>
+
+<script>
+// УЛЬТРА-МИНИМАЛЬНЫЙ ЗАГРУЗЧИК
+(function() {
+    const CONFIG = {
+    baseUrl: 'https://marokone.github.io/welcomecity-vacancies/',
+    cssUrl: 'css/vacancies.css?v=1.0.8',
+    jsUrl: 'js/main.js',
+    fallbackJsUrl: 'js/fallback.js',
+    supabase: {
+        url: 'https://vhbiezamhpyejdqvvwuj.supabase.co',
+        key: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZoYmllemFtaHB5ZWpkcXZ2d3VqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjE2Njc0MDgsImV4cCI6MjA3NzI0MzQwOH0.13h_XJ7kQFtuCjavkOXN9TzXNF2X4jX5-rcNCFiFqO0'
+    } 
+};
+
+    // Загрузка CSS
+    function loadCSS() {
+        const link = document.createElement('link');
+        link.rel = 'stylesheet';
+        link.href = CONFIG.baseUrl + CONFIG.cssUrl;
+        link.onerror = () => console.warn('⚠️ Не удалось загрузить CSS');
+        document.head.appendChild(link);
+    }
+
+    // Загрузка основной системы
+    function loadMainSystem() {
+        const script = document.createElement('script');
+        script.src = CONFIG.baseUrl + CONFIG.jsUrl;
+        script.onload = () => console.log('✅ Система вакансий загружена');
+        script.onerror = () => {
+            console.error('❌ Ошибка загрузки, используем fallback');
+            loadFallbackSystem();
+        };
+        document.head.appendChild(script);
+    }
+
+    // Резервная система
+    function loadFallbackSystem() {
+        const script = document.createElement('script');
+        script.src = CONFIG.baseUrl + CONFIG.fallbackJsUrl;
+        document.head.appendChild(script);
+    }
+
+    // Инициализация
+    function init() {
+        // Инициализация Supabase
+        window.supabase = supabase.createClient(CONFIG.supabase.url, CONFIG.supabase.key);
+        
+        // Загрузка стилей
+        loadCSS();
+        
+        // Загрузка системы
+        document.addEventListener('DOMContentLoaded', loadMainSystem);
+    }
+
+    init();
+})();
+</script>
