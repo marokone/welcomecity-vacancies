@@ -1164,7 +1164,7 @@ class VacancyApp {
         history.pushState({ vacancy }, '', newUrl);
     }
     // ========== КОНЕЦ МЕТОДА showVacancyDetail ==========
-}
+},
 
     showVacancyList() {
         const savedHTML = sessionStorage.getItem('vacancyListHTML');
