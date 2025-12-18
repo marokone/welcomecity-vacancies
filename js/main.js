@@ -1094,35 +1094,21 @@ class VacancyApp {
     const condEl = document.querySelector('.vacancy-conditions');
     if (condEl) condEl.innerHTML = vacancy.conditions || 'Не указано';
     
+    // +++ УВЕЛИЧИВАЕМ ЗАДЕРЖКУ И ДОБАВЛЯЕМ МИНИМАЛЬНЫЙ ТРИГГЕР +++
     setTimeout(() => {
         this.updateTildaAccordion();
         
-        // +++ НАЧАЛО НОВОГО КОДА +++
-        // Даём Tilda время на первичную отрисовку аккордеона
+        // МИНИМАЛЬНЫЙ ТРИГГЕР ДЛЯ TILDA (2 строки)
         setTimeout(() => {
-            // 1. Находим главный контейнер Tilda на странице
-            const tildaPage = document.querySelector('.t-body, .t-records');
+            // Заставляем браузер перерисовать ВСЁ, включая Tilda блоки
+            document.body.style.transform = 'translateZ(0)';
+            void document.body.offsetHeight; // Принудительный reflow
+            document.body.style.transform = '';
             
-            if (tildaPage) {
-                console.log('🔄 Отправляем сигнал Tilda для пересчета макета...');
-                
-                // 2. ТРИГГЕР: временно изменяем размер контейнера
-                // Это самый безопасный способ вызвать пересчёт layout
-                const originalWidth = tildaPage.style.width;
-                tildaPage.style.width = '99.9%'; // Минимальное изменение
-                
-                // 3. Возвращаем обратно в следующем кадре браузера
-                requestAnimationFrame(() => {
-                    tildaPage.style.width = originalWidth;
-                    console.log('✅ Сигнал Tilda отправлен');
-                });
-            } else {
-                console.log('⚠️ Контейнер Tilda не найден');
-            }
-        }, 100); // Небольшая дополнительная задержка
-        // +++ КОНЕЦ НОВОГО КОДА +++
+            console.log('✅ Tilda reflow triggered');
+        }, 50);
         
-    }, 300); // Увеличьте эту задержку до 500-700, если нужно
+    }, 700); // Увеличиваем до 700ms для полной инициализации Tilda
     
     const newUrl = `${window.location.pathname}?vacancy=${encodeURIComponent(vacancy.title)}&project=${encodeURIComponent(vacancy.project || '')}&dept=${encodeURIComponent(vacancy.department)}`;
     history.pushState({ vacancy }, '', newUrl);
