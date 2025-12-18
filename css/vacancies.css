@@ -1206,26 +1206,6 @@
     transform: none !important;
   }
 }
-/* Исправление адаптивности для планшетов (700-1000px) */
-@media (min-width: 700px) and (max-width: 1000px) {
-    /* Применяем ко всем блокам деталей вакансии */
-    #rec1480130241 .tn-atom,
-    #rec1480130251 .tn-atom,
-    #rec1480130271 .tn-atom,
-    #rec1480130281 .tn-atom,
-    #rec1480130341 .tn-atom {
-        position: relative !important;
-        top: auto !important;
-        left: auto !important;
-        width: 100% !important;
-        margin-bottom: 24px !important;
-        display: block !important;
-    }
-    
-    /* Для аккордеона - отдельное правило */
-    #rec1513289611 .t-accordion__item {
-        position: relative !important;
-    }
-}
+
 
 
