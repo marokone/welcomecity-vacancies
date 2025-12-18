@@ -4,6 +4,7 @@
   --font-size-base: 16px;
   --font-size-lg: 18px;
   --font-size-xl: 20px;
+  --font-size-2xl: 24px;
 
   --text-dark: #000;
   --text-gray: #666;
@@ -22,9 +23,9 @@
 
 /* Контейнер */
 .vacancy-container {
-  max-width: 960px;
+  max-width: 1200px;
   margin: 0 auto;
-  padding: 24px;
+  padding: 32px 20px;
   font-family: var(--font-family);
   color: var(--text-dark);
 }
@@ -33,6 +34,7 @@
 .search-input-container {
   position: relative;
   border-bottom: 1px solid var(--border-color);
+  margin-bottom: 8px;
 }
 
 .search-icon {
@@ -48,7 +50,7 @@
 #vacancy-search {
   width: 100%;
   padding: 12px 12px 12px 44px;
-  font-size: var(--font-size-xl);
+  font-size: var(--font-size-2xl);
   border: none;
   outline: none;
   background: transparent;
@@ -60,7 +62,7 @@
 }
 
 .search-hint {
-  margin-top: 6px;
+  margin-top: 4px;
   font-size: var(--font-size-sm);
   color: var(--text-gray);
 }
@@ -68,8 +70,8 @@
 /* Фильтры */
 .filters-row {
   display: flex;
-  gap: 12px;
-  margin: 20px 0;
+  gap: 16px;
+  margin: 24px 0;
 }
 
 .custom-select {
@@ -78,12 +80,18 @@
   border-radius: 8px;
   background: var(--background-white);
   cursor: pointer;
+  transition: border var(--transition), box-shadow var(--transition);
+}
+
+.custom-select:hover {
+  border-color: #b3b3b3;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
 }
 
 .select-header {
   display: flex;
   justify-content: space-between;
-  padding: 10px 12px;
+  padding: 12px 14px;
 }
 
 .selected-values {
@@ -119,7 +127,7 @@
 }
 
 .select-option {
-  padding: 10px 12px;
+  padding: 12px 14px;
   cursor: pointer;
   border-bottom: 1px solid var(--border-light);
   font-size: var(--font-size-base);
@@ -139,6 +147,7 @@
   border-bottom: 1px solid var(--border-color);
   cursor: pointer;
   transition: transform var(--transition), background var(--transition);
+  position: relative;
 }
 
 .vacancy-card::before {
@@ -181,55 +190,4 @@
   color: var(--text-dark);
   margin: 24px 0 12px;
   border-bottom: 1px solid var(--border-light);
-}
-
-/* Кнопка сброса */
-.reset-btn {
-  width: 100%;
-  padding: 10px;
-  border: 1px solid var(--border-color);
-  border-radius: 8px;
-  background: var(--background-white);
-  font-size: var(--font-size-base);
-  color: var(--text-gray);
-  cursor: pointer;
-  transition: all var(--transition);
-}
-
-.reset-btn:hover {
-  border-color: var(--primary-color);
-  color: var(--primary-color);
-}
-
-/* Мобильные фильтры */
-.mobile-filters-btn {
-  width: 100%;
-  padding: 12px;
-  border: 1px solid var(--border-color);
-  border-radius: 8px;
-  background: var(--background-white);
-  font-size: var(--font-size-base);
-  color: var(--text-dark);
-  display: flex;
-  justify-content: space-between;
-}
-
-.mobile-filters-modal {
-  display: none;
-  position: fixed;
-  inset: 0;
-  background: rgba(0,0,0,0.5);
-}
-
-.mobile-filters-modal.active {
-  display: block;
-}
-
-.mobile-filters-content {
-  position: absolute;
-  bottom: 0;
-  left: 0; right: 0;
-  background: var(--background-white);
-  border-radius: 16px 16px 0 0;
-  padding: 16px;
 }
