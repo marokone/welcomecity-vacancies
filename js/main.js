@@ -1161,7 +1161,7 @@ showVacancyDetail(vacancy) {
     // Обновляем URL
     const newUrl = `${window.location.pathname}?vacancy=${encodeURIComponent(vacancy.title)}&project=${encodeURIComponent(vacancy.project || '')}&dept=${encodeURIComponent(vacancy.department)}`;
     history.pushState({ vacancy }, '', newUrl);
-},
+}
 // ========== КОНЕЦ МЕТОДА showVacancyDetail ==========
 
 window.vacancyApp = new VacancyApp();
