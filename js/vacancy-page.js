@@ -469,3 +469,63 @@ class VacancyPageApp {
 if (window.location.pathname.includes('/vacancy')) {
     window.vacancyPageApp = new VacancyPageApp();
 }
+// ==========================
+// АВТОМАТИЧЕСКИЙ ЗАПУСК
+// ==========================
+
+// Ждем полной загрузки DOM
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('📄 DOM загружен, инициализируем VacancyPageApp...');
+    
+    // Проверяем, что мы на странице вакансии
+    if (window.location.pathname.includes('/vacancy') || 
+        window.location.pathname.includes('vacancy')) {
+        
+        // Проверяем, что Supabase загружен
+        if (!window.supabase) {
+            console.error('❌ Supabase не загружен!');
+            // Можно попробовать загрузить вручную
+            loadSupabaseManually();
+            return;
+        }
+        
+        // Запускаем приложение
+        window.vacancyPageApp = new VacancyPageApp();
+        console.log('✅ VacancyPageApp запущен');
+    }
+});
+
+// Функция для ручной загрузки Supabase если он не загрузился
+function loadSupabaseManually() {
+    console.log('🔄 Пробуем загрузить Supabase вручную...');
+    
+    // Создаем скрипт Supabase
+    const supabaseScript = document.createElement('script');
+    supabaseScript.src = 'https://unpkg.com/@supabase/supabase-js@2';
+    supabaseScript.onload = function() {
+        console.log('✅ Supabase JS загружен');
+        
+        // Инициализируем клиент
+        window.supabase = supabase.createClient(
+            'https://vhbiezamhpyejdqvvwuj.supabase.co',
+            'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZoYmllemFtaHB5ZWpkcXZ2d3VqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjE2Njc0MDgsImV4cCI6MjA3NzI0MzQwOH0.13h_XJ7kQFtuCjavkOXN9TzXNF2X4jX5-rcNCFiFqO0'
+        );
+        
+        // Запускаем приложение
+        window.vacancyPageApp = new VacancyPageApp();
+    };
+    
+    supabaseScript.onerror = function() {
+        console.error('❌ Не удалось загрузить Supabase');
+        // Показываем сообщение об ошибке
+        document.body.innerHTML = `
+            <div style="text-align:center; padding: 100px 20px;">
+                <h2>Ошибка загрузки</h2>
+                <p>Пожалуйста, обновите страницу</p>
+                <button onclick="location.reload()">Обновить</button>
+            </div>
+        `;
+    };
+    
+    document.head.appendChild(supabaseScript);
+}
