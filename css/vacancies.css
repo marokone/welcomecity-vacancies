@@ -1206,70 +1206,123 @@
     transform: none !important;
   }
 }
-/* ===== КРИТИЧЕСКИЕ ПРАВКИ ДЛЯ ПЛАНШЕТОВ (на основе диагностики) ===== */
+/* ===== ИСПРАВЛЕННЫЕ ПРАВКИ ДЛЯ ПЛАНШЕТОВ ===== */
 @media (min-width: 700px) and (max-width: 1000px) {
-    /* БЛОК 1: rec1480130251 - описание вакансии */
+    /* 1. ОСНОВНОЙ КОНТЕЙНЕР - ограничиваем ширину и центрируем */
+    #rec1480130241,
+    #rec1480130251,
+    #rec1480130271,
+    #rec1480130281,
+    #rec1480130341,
+    #rec1513289611 {
+        position: relative !important;
+        width: 90% !important;
+        max-width: 800px !important;
+        margin: 0 auto 40px auto !important;
+        left: auto !important;
+        right: auto !important;
+        padding: 30px !important;
+        box-sizing: border-box !important;
+        background: white !important;
+        border-radius: 12px !important;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08) !important;
+        overflow: hidden !important; /* Важно: обрезаем выпадающее содержимое */
+    }
+    
+    /* 2. ВНУТРЕННИЕ ЭЛЕМЕНТЫ TILDA - нормализуем */
     #rec1480130251 .t396__elem,
     #rec1480130251 .t396__group,
-    #rec1480130251 .t396__carrier {
-        position: relative !important;
-        top: auto !important;
-        left: auto !important;
-        width: 100% !important;
-        margin-bottom: 24px !important;
-        display: block !important;
-    }
-    
-    /* БЛОК 2: rec1480130271 - требования */
+    #rec1480130251 .t396__carrier,
     #rec1480130271 .t396__elem,
-    #rec1480130271 .t396__group {
-        position: relative !important;
-        top: auto !important;
-        left: auto !important;
-        width: 100% !important;
-        margin-bottom: 24px !important;
-    }
-    
-    /* БЛОК 3: rec1480130281 - обязанности */
-    #rec1480130281 .t396__elem {
-        position: relative !important;
-        top: auto !important;
-        left: auto !important;
-        width: 100% !important;
-    }
-    
-    /* БЛОК 4: rec1480130341 - кнопка формы */
+    #rec1480130271 .t396__group,
+    #rec1480130281 .t396__elem,
     #rec1480130341 .t396__elem,
     #rec1480130341 .t396__group {
         position: relative !important;
         top: auto !important;
         left: auto !important;
         width: 100% !important;
+        height: auto !important; /* Важно: не фиксированная высота */
+        min-height: auto !important;
+        max-height: none !important;
+        margin: 0 0 24px 0 !important;
+        padding: 0 !important;
+        display: block !important;
+        box-sizing: border-box !important;
+        overflow: visible !important;
     }
     
-    /* АККОРДЕОН: rec1513289611 */
-    #rec1513289611 .t668__btn,
-    #rec1513289611 .t668__text {
-        position: relative !important;
-        top: auto !important;
-        left: auto !important;
-        width: 100% !important;
-    }
-    
-    /* ОБЩИЕ ПРАВИЛА для всех .t396 контейнеров */
-    .t396, .t396__artboard {
+    /* 3. КОНТЕЙНЕРЫ TILDA (.t396) - сбрасываем фиксированные высоты */
+    .t396,
+    .t396__artboard {
         position: relative !important;
         height: auto !important;
         min-height: auto !important;
+        max-height: none !important;
+        width: 100% !important;
+        display: block !important;
+        overflow: visible !important;
     }
     
-    /* УБИРАЕМ негативные отступы (ваша проблема left: -78.5px) */
+    /* 4. ТЕКСТОВЫЕ ЭЛЕМЕНТЫ ВНУТРИ - ограничиваем ширину текста */
+    .tn-atom,
+    .t-rich-text,
+    .t-text,
+    .t-accordion__text,
+    .t668__text {
+        max-width: 100% !important;
+        word-wrap: break-word !important;
+        overflow-wrap: break-word !important;
+        line-height: 1.6 !important;
+    }
+    
+    /* 5. ОЧЕНЬ ВАЖНО: Убираем transform и translate, которые ломают layout */
     .t396__elem,
     .t396__group,
-    .t396__carrier {
-        left: 0 !important;
-        margin-left: 0 !important;
+    .t396__carrier,
+    .tn-elem {
+        transform: none !important;
+        transform-origin: 50% 50% !important;
+        transition: none !important;
+    }
+    
+    /* 6. АККОРДЕОН - особые стили */
+    #rec1513289611 .t668 {
+        position: relative !important;
+        width: 100% !important;
+    }
+    
+    #rec1513289611 .t668__btn {
+        position: relative !important;
+        width: 100% !important;
+        padding: 20px !important;
+        margin-bottom: 10px !important;
+        border: 1px solid #e0e0e0 !important;
+        border-radius: 8px !important;
+        background: #f8f9fa !important;
+    }
+    
+    #rec1513289611 .t668__text {
+        position: relative !important;
+        width: 100% !important;
+        padding: 20px !important;
+        background: white !important;
+        border: 1px solid #e0e0e0 !important;
+        border-top: none !important;
+        border-radius: 0 0 8px 8px !important;
+        margin-top: -10px !important; /* Поднимаем к кнопке */
+    }
+    
+    /* 7. Убираем абсолютные позиции у всех дочерних элементов */
+    #rec1480130251 *,
+    #rec1480130271 *,
+    #rec1480130281 *,
+    #rec1480130341 * {
+        position: relative !important;
+        top: auto !important;
+        left: auto !important;
+        right: auto !important;
+        bottom: auto !important;
     }
 }
-
 
