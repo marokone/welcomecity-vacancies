@@ -98,8 +98,8 @@
   left: 12px !important;
   top: 50%;
   transform: translateY(-50%);
-  width: 54px !important;
-  height: 54px !important;
+  width: 84px !important;
+  height: 44px !important;
   opacity: 0.5 !important;
   transition: opacity var(--transition-fast);
   pointer-events: none;
@@ -125,7 +125,7 @@
 #vacancy-search::placeholder {
   color: #999 !important;
   font-size: var(--font-size-5xl) !important;
-  font-weight: 300 !important;
+  font-weight: 600 !important;
 }
 
 .search-hint {
@@ -153,14 +153,15 @@
     font-family: var(--font-family);
     flex: 1;
     min-width: 0;
+  background: #f9f9f9 !important;
     max-width: none;
     background: var(--background-white);
-    border: 1px solid var(--avito-border);
+    border: none !important;
     border-radius: 8px;
     cursor: pointer;
     user-select: none;
     transition: all var(--transition-normal);
-    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
+    box-shadow: none !important;
 }
 
 .custom-select:hover {
@@ -169,8 +170,8 @@
 }
 
 .custom-select.active {
-  border-color: #e0e0e0 !important;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03) !important;
+  background: white !important;  /* белый фон при открытии */
+  border-radius: 5px 5px 5px 5px !important; /* скругление сверху */
 }
 
 .custom-select.has-selection {
@@ -245,11 +246,11 @@
 }
 
 .arrow-btn {
-  font-size: 12px;
+  content: "⌵" !important;  /* стильный уголок */
+  font-size: 16px !important; /* чуть больше */
   color: #666;
   cursor: pointer;
   transition: transform var(--transition-normal);
-  font-weight: bold;
 }
 
 .custom-select.active .arrow-btn {
@@ -263,12 +264,13 @@
   left: 0;
   right: 0;
   background: var(--background-white);
-  border: 1px solid var(--avito-border);
-  border-radius: 8px;
+  border: none !important;
+  border-radius: 5px;
   max-height: 320px;
   overflow-y: auto;
   z-index: 100;
-  box-shadow: var(--shadow-lg);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.08) !important;
+  margin-top: -1px !important;
   display: none;
   animation: dropdownSlide 0.2s ease-out;
 }
@@ -794,21 +796,21 @@
 
   .search-icon {
     left: 10px !important;
-    width: 18px !important;
-    height: 18px !important;
+    width: 32px !important;
+    height: 32px !important;
   }
 
   #vacancy-search {
-    font-size: 18px !important;
+    font-size: 32px !important;
     padding: 14px 14px 14px 40px !important;
   }
 
   #vacancy-search::placeholder {
-    font-size: 18px !important;
+    font-size: 32px !important;
   }
 
   .search-hint {
-    font-size: 13px !important;
+    font-size: 16px !important;
   }
 
   .vacancy-card {
