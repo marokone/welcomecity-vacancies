@@ -79,18 +79,29 @@ jobs:
         run: python parse_descriptions.py
         working-directory: ${{ github.workspace }}/Beliy_Mys_VAC
 
+
       - name: Экспорт для Supabase
         run: python export_to_supabase.py
         working-directory: ${{ github.workspace }}/Beliy_Mys_VAC
 
-      - name: Upload jobs_structured.json
-        uses: actions/upload-artifact@v4
-        with:
-          name: friendwork-jobs-structured
-          path: Beliy_Mys_VAC/jobs_structured.json
+      - name: Преобразование в vacancies_rows.csv
+        run: python convert_to_vacancies_rows.py
+        working-directory: ${{ github.workspace }}/Beliy_Mys_VAC/Новая папка
 
       - name: Upload jobs_supabase.csv
         uses: actions/upload-artifact@v4
         with:
           name: friendwork-jobs-supabase
           path: Beliy_Mys_VAC/jobs_supabase.csv
+
+      - name: Upload vacancies_rows.csv
+        uses: actions/upload-artifact@v4
+        with:
+          name: friendwork-vacancies-rows
+          path: Beliy_Mys_VAC/Новая папка/vacancies_rows.csv
+
+      - name: Upload jobs_structured.json
+        uses: actions/upload-artifact@v4
+        with:
+          name: friendwork-jobs-structured
+          path: Beliy_Mys_VAC/jobs_structured.json
