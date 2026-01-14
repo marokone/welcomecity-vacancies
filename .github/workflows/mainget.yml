@@ -98,7 +98,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: friendwork-vacancies-rows
-          path: Beliy_Mys_VAC/Новая папка/vacancies_rows.csv
+          path: Beliy_Mys_VAC/vacancies_rows.csv
 
       - name: Upload jobs_structured.json
         uses: actions/upload-artifact@v4
