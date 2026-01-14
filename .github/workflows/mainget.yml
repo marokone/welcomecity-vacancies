@@ -86,7 +86,7 @@ jobs:
 
       - name: Преобразование в vacancies_rows.csv
         run: python convert_to_vacancies_rows.py
-        working-directory: ${{ github.workspace }}/Beliy_Mys_VAC/Новая папка
+        working-directory: ${{ github.workspace }}/Beliy_Mys_VAC/
 
       - name: Upload jobs_supabase.csv
         uses: actions/upload-artifact@v4
