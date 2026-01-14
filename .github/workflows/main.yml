@@ -1,3 +1,14 @@
+name: Fetch FriendWork Jobs
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 6 * * *'
+
+jobs:
+  fetch-jobs:
+    runs-on: ubuntu-latest
+    steps:
       - name: Get FriendWork jobs
         run: |
           curl -X GET \
@@ -9,3 +20,9 @@
               "paging": { "page": 0, "count": 5 }
             }' \
             'https://api.friend.work/jobs' > jobs.json
+
+      - name: Upload jobs.json
+        uses: actions/upload-artifact@v4
+        with:
+          name: friendwork-jobs
+          path: jobs.json
