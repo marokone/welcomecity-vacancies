@@ -15,7 +15,7 @@ headers = {
     'apikey': SUPABASE_API_KEY,
     'Authorization': f'Bearer {SUPABASE_API_KEY}',
     'Content-Type': 'application/json',
-    'Prefer': 'return=minimal'
+    'Prefer': 'return=minimal,resolution=merge-duplicates'
 }
 
 batch_size = 50  # Можно увеличить/уменьшить при необходимости
