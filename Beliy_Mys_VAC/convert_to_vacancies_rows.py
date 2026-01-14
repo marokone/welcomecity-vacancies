@@ -10,7 +10,7 @@ src = pd.read_csv(input_path, dtype=str)
 
 # Формируем итоговый DataFrame с нужными столбцами и порядком
 result = pd.DataFrame({
-    'id': '',
+    'id': range(1, len(src) + 1),
     'title': src['title'],
     'project': '',
     'department': '',
