@@ -36,8 +36,7 @@ jobs:
             page=$((page+1))
           done
 
-          mkdir -p Beliy_Mys_VAC
-          echo '[' > Beliy_Mys_VAC/jobs_full.json
+          echo '[' > jobs_full.json
           first=1
           for jobid in "${jobids[@]}"; do
             detail=$(curl -s -X GET \
@@ -47,17 +46,17 @@ jobs:
             if [ $first -eq 1 ]; then
               first=0
             else
-              echo ',' >> Beliy_Mys_VAC/jobs_full.json
+              echo ',' >> jobs_full.json
             fi
-            echo "$detail" >> Beliy_Mys_VAC/jobs_full.json
+            echo "$detail" >> jobs_full.json
           done
-          echo ']' >> Beliy_Mys_VAC/jobs_full.json
+          echo ']' >> jobs_full.json
 
       - name: Upload jobs_full.json
         uses: actions/upload-artifact@v4
         with:
           name: friendwork-jobs-full
-          path: Beliy_Mys_VAC/jobs_full.json
+          path: jobs_full.json
 
       - name: Установить Python и зависимости
         run: |
@@ -68,8 +67,18 @@ jobs:
         run: python parse_descriptions.py
         working-directory: ${{ github.workspace }}/Beliy_Mys_VAC
 
+      - name: Экспорт для Supabase
+        run: python export_to_supabase.py
+        working-directory: ${{ github.workspace }}/Beliy_Mys_VAC
+
       - name: Upload jobs_structured.json
         uses: actions/upload-artifact@v4
         with:
           name: friendwork-jobs-structured
           path: Beliy_Mys_VAC/jobs_structured.json
+
+      - name: Upload jobs_supabase.csv
+        uses: actions/upload-artifact@v4
+        with:
+          name: friendwork-jobs-supabase
+          path: Beliy_Mys_VAC/jobs_supabase.csv
