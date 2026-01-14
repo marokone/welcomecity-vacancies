@@ -57,3 +57,18 @@ jobs:
         with:
           name: friendwork-jobs-full
           path: jobs_full.json
+
+      - name: Установить Python и зависимости
+        run: |
+          python -m pip install --upgrade pip
+          pip install beautifulsoup4 lxml
+
+      - name: Парсинг описаний вакансий
+        run: python parse_descriptions.py
+        working-directory: ${{ github.workspace }}/Beliy_Mys_VAC
+
+      - name: Upload jobs_structured.json
+        uses: actions/upload-artifact@v4
+        with:
+          name: friendwork-jobs-structured
+          path: Beliy_Mys_VAC/jobs_structured.json
