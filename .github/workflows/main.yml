@@ -1,0 +1,31 @@
+name: Fetch FriendWork Jobs
+
+on:
+  workflow_dispatch:    # запуск вручную из GitHub UI
+  schedule:
+    - cron: '0 6 * * *' # запуск каждый день в 6 утра по UTC
+
+jobs:
+  fetch-jobs:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Get FriendWork jobs
+        run: |
+          curl -X GET \
+            --header 'Accept: application/json' \
+            --header 'Content-Type: application/json' \
+            --header "Authorization: Bearer ${{ secrets.FRIENDWORK_API_TOKEN }}" \
+            -d '{
+              "statuses": ["open", "onHold"],
+              "customer": { "name": "ООО \"Торик\"" },
+              "recruiterAccount": { "userName": "s.oberemko@wine.ru" },
+              "employeeAccounts": [ { "userName": "s.oberemko@wine.ru" } ],
+              "paging": { "page": 0, "count": 5 }
+            }' \
+            'https://api.friend.work/jobs' > jobs.json
+
+      - name: Upload jobs.json
+        uses: actions/upload-artifact@v4
+        with:
+          name: friendwork-jobs
+          path: jobs.json
