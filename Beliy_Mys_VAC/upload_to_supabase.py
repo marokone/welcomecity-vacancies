@@ -1,5 +1,7 @@
+
 import pandas as pd
 import requests
+from datetime import datetime
 
 SUPABASE_URL = 'https://vhbiezamhpyejdqvvwuj.supabase.co'
 SUPABASE_API_KEY = 'sb_publishable_PEUJVHuw56T2d3vA2iVMZA_POiY0MCX'
@@ -20,10 +22,10 @@ batch_size = 50  # Можно увеличить/уменьшить при не�
 # Массовая вставка (bulk insert)
 data = df.where(pd.notnull(df), None).to_dict(orient='records')
 
-# Заполняем пустые updated_at
+# Заполняем пустые updated_at корректной датой
 for row in data:
     if not row.get('updated_at') or str(row.get('updated_at')).strip() == '' or str(row.get('updated_at')).lower() == 'none':
-        row['updated_at'] = 'Нужно заполнить'
+        row['updated_at'] = datetime.utcnow().isoformat()
 
 batch_size = 50  # Можно увеличить/уменьшить при необходимости
 for i in range(0, len(data), batch_size):
