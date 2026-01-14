@@ -58,6 +58,9 @@ jobs:
           name: friendwork-jobs-full
           path: jobs_full.json
 
+      - name: Debug jobs_full.json
+        run: cat Beliy_Mys_VAC/jobs_full.json
+
       - name: Установить Python и зависимости
         run: |
           python -m pip install --upgrade pip
