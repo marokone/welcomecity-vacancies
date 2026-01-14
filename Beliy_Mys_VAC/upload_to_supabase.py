@@ -16,8 +16,14 @@ headers = {
     'Prefer': 'return=minimal'
 }
 
+batch_size = 50  # Можно увеличить/уменьшить при необходимости
 # Массовая вставка (bulk insert)
 data = df.where(pd.notnull(df), None).to_dict(orient='records')
+
+# Заполняем пустые updated_at
+for row in data:
+    if not row.get('updated_at') or str(row.get('updated_at')).strip() == '' or str(row.get('updated_at')).lower() == 'none':
+        row['updated_at'] = 'Нужно заполнить'
 
 batch_size = 50  # Можно увеличить/уменьшить при необходимости
 for i in range(0, len(data), batch_size):
