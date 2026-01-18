@@ -12,8 +12,8 @@ src = pd.read_csv(input_path, dtype=str)
 result = pd.DataFrame({
     'id': range(1, len(src) + 1),
     'title': src['title'],
-    'project': '',
-    'department': '',
+    'project': src['project'],
+    'department': src['department'],
     'description': src['description'],
     'requirements': src['requirements'],
     'responsibilities': src['responsibilities'],
