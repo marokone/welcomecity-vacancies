@@ -1,0 +1,47 @@
+{
+  "organizationUnits": [
+    { "foreignKey": "uk-1", "name": "Управляющая Компания", "isLegalEntity": true },
+    { "foreignKey": "uk-1-1", "name": "Администрация", "parentForeignKey": "uk-1" },
+    { "foreignKey": "uk-1-2", "name": "HR", "parentForeignKey": "uk-1" },
+    { "foreignKey": "uk-1-3", "name": "Юридический отдел", "parentForeignKey": "uk-1" },
+    { "foreignKey": "uk-1-4", "name": "Отдел бухгалтерии", "parentForeignKey": "uk-1" },
+    { "foreignKey": "uk-1-5", "name": "Отдел закупок", "parentForeignKey": "uk-1" },
+    { "foreignKey": "uk-1-6", "name": "Техническая служба", "parentForeignKey": "uk-1" },
+    { "foreignKey": "uk-1-7", "name": "Маркетинг", "parentForeignKey": "uk-1" },
+
+    { "foreignKey": "en-1", "name": "Энотека", "isLegalEntity": true },
+    { "foreignKey": "en-1-1", "name": "Администрация", "parentForeignKey": "en-1" },
+    { "foreignKey": "en-1-2", "name": "Зал", "parentForeignKey": "en-1" },
+    { "foreignKey": "en-1-3", "name": "Служба закупок", "parentForeignKey": "en-1" },
+    { "foreignKey": "en-1-4", "name": "Техническая служба", "parentForeignKey": "en-1" },
+
+    { "foreignKey": "res-1", "name": "Рестораны", "isLegalEntity": true },
+    { "foreignKey": "res-1-1", "name": "Администрация", "parentForeignKey": "res-1" },
+    { "foreignKey": "res-1-2", "name": "Бар", "parentForeignKey": "res-1" },
+    { "foreignKey": "res-1-3", "name": "Кухня", "parentForeignKey": "res-1" },
+    { "foreignKey": "res-1-4", "name": "Кондитерский цех", "parentForeignKey": "res-1" },
+    { "foreignKey": "res-1-5", "name": "Пекарный цех", "parentForeignKey": "res-1" },
+    { "foreignKey": "res-1-6", "name": "Зал", "parentForeignKey": "res-1" },
+    { "foreignKey": "res-1-7", "name": "АХО/Клининг", "parentForeignKey": "res-1" },
+    { "foreignKey": "res-1-8", "name": "Техническая служба", "parentForeignKey": "res-1" },
+
+    { "foreignKey": "muz-1", "name": "Музей", "isLegalEntity": true },
+    { "foreignKey": "muz-1-1", "name": "Администрация", "parentForeignKey": "muz-1" },
+    { "foreignKey": "muz-1-2", "name": "Операционный отдел", "parentForeignKey": "muz-1" },
+    { "foreignKey": "muz-1-3", "name": "Экскурсионно-выставочный отдел", "parentForeignKey": "muz-1" },
+    { "foreignKey": "muz-1-4", "name": "Техническая служба", "parentForeignKey": "muz-1" },
+    { "foreignKey": "muz-1-5", "name": "АХО/Клининг", "parentForeignKey": "muz-1" },
+
+    { "foreignKey": "lab-1", "name": "Лаборатория", "isLegalEntity": true },
+    { "foreignKey": "lab-1-1", "name": "Администрация", "parentForeignKey": "lab-1" },
+    { "foreignKey": "lab-1-2", "name": "Лаборатория", "parentForeignKey": "lab-1" },
+    { "foreignKey": "lab-1-3", "name": "Школа Сомелье", "parentForeignKey": "lab-1" },
+    { "foreignKey": "lab-1-4", "name": "Техническая служба", "parentForeignKey": "lab-1" },
+
+    { "foreignKey": "event-1", "name": "Ивент/Экспо", "isLegalEntity": true },
+    { "foreignKey": "event-1-1", "name": "Администрация", "parentForeignKey": "event-1" },
+    { "foreignKey": "event-1-2", "name": "Менеджерский отдел", "parentForeignKey": "event-1" },
+    { "foreignKey": "event-1-3", "name": "Техническая служба", "parentForeignKey": "event-1" },
+    { "foreignKey": "event-1-4", "name": "АХО/Клининг", "parentForeignKey": "event-1" }
+  ]
+}
