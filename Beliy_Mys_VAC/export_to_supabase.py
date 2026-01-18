@@ -8,6 +8,8 @@ FIELDS = [
     ('jobtype_id', lambda j: j.get('jobType', {}).get('id')),
     ('jobtype_name', lambda j: j.get('jobType', {}).get('name')),
     ('title', 'name'),
+    ('project', lambda j, org_map=None: get_project_department(j, org_map)[0]),
+    ('department', lambda j, org_map=None: get_project_department(j, org_map)[1]),
     ('description', lambda j: j.get('description_structured', {}).get('описание', '')),
     ('requirements', lambda j: j.get('description_structured', {}).get('требования', '')),
     ('responsibilities', lambda j: j.get('description_structured', {}).get('обязанности', '')),
@@ -16,19 +18,48 @@ FIELDS = [
     ('updated_at', 'dateUpdated'),
 ]
 
-def get_value(job, key):
+
+def get_value(job, key, org_map=None):
     if callable(key):
-        return key(job)
+        try:
+            return key(job, org_map=org_map)
+        except TypeError:
+            return key(job)
     return job.get(key, '')
 
+# --- Новая функция для поиска project и department ---
+def get_project_department(job, org_map):
+    org_unit = job.get('organizationUnit')
+    if not org_unit or not isinstance(org_unit, dict):
+        return ('', '')
+    fk = org_unit.get('foreignKey')
+    if not fk:
+        return ('', '')
+    dept = org_map.get(fk)
+    if not dept:
+        return ('', '')
+    dept_name = dept.get('name', '')
+    parent_fk = dept.get('parentForeignKey')
+    if parent_fk:
+        project = org_map.get(parent_fk)
+        project_name = project.get('name', '') if project else ''
+    else:
+        project_name = dept_name
+    return (project_name, dept_name)
+
 def main():
-    with open('jobs_structured.json', encoding='utf-8') as f:
+    # Загружаем справочник подразделений
+    with open('Beliy_Mys_VAC/organization_units.json', encoding='utf-8') as f_org:
+        org_data = json.load(f_org)
+        org_map = {unit['foreignKey']: unit for unit in org_data['organizationUnits']}
+
+    with open('Beliy_Mys_VAC/jobs_structured.json', encoding='utf-8') as f:
         jobs = json.load(f)
-    with open('jobs_supabase.csv', 'w', encoding='utf-8', newline='') as f:
+    with open('Beliy_Mys_VAC/jobs_supabase.csv', 'w', encoding='utf-8', newline='') as f:
         writer = csv.writer(f)
         writer.writerow([f[0] for f in FIELDS])
         for job in jobs:
-            row = [get_value(job, f[1]) for f in FIELDS]
+            row = [get_value(job, f[1], org_map=org_map) for f in FIELDS]
             # Преобразуем даты в ISO, если есть
             for i, field in enumerate([f[0] for f in FIELDS]):
                 if field in ('created_at', 'updated_at') and row[i]:
