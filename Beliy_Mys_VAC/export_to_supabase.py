@@ -49,13 +49,13 @@ def get_project_department(job, org_map):
 
 def main():
     # Загружаем справочник подразделений
-    with open('Beliy_Mys_VAC/organization_units.json', encoding='utf-8') as f_org:
+    with open('organization_units.json', encoding='utf-8') as f_org:
         org_data = json.load(f_org)
         org_map = {unit['foreignKey']: unit for unit in org_data['organizationUnits']}
 
-    with open('Beliy_Mys_VAC/jobs_structured.json', encoding='utf-8') as f:
+    with open('jobs_structured.json', encoding='utf-8') as f:
         jobs = json.load(f)
-    with open('Beliy_Mys_VAC/jobs_supabase.csv', 'w', encoding='utf-8', newline='') as f:
+    with open('jobs_supabase.csv', 'w', encoding='utf-8', newline='') as f:
         writer = csv.writer(f)
         writer.writerow([f[0] for f in FIELDS])
         for job in jobs:
