@@ -16,6 +16,7 @@ FIELDS = [
     ('conditions', lambda j: j.get('description_structured', {}).get('условия', '')),
     ('created_at', 'dateCreated'),
     ('updated_at', 'dateUpdated'),
+    ('status', 'active'),
 ]
 
 
