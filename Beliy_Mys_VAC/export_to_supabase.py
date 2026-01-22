@@ -17,6 +17,9 @@ FIELDS = [
     ('created_at', 'dateCreated'),
     ('updated_at', 'dateUpdated'),
     ('status', lambda j: 'active'),
+]
+
+
 def get_value(job, key, org_map=None):
     if callable(key):
         try:
