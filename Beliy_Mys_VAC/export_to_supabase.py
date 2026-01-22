@@ -5,8 +5,8 @@ from datetime import datetime
 # Какие поля нужны для Supabase
 FIELDS = [
     ('job_id', 'jobId'),
-    ('jobtype_id', lambda j: j.get('jobType', {}).get('id')),
-    ('jobtype_name', lambda j: j.get('jobType', {}).get('name')),
+    ('jobtype_id', lambda j: j.get('jobType', {}).get('id') if j.get('jobType') else ''),
+    ('jobtype_name', lambda j: j.get('jobType', {}).get('name') if j.get('jobType') else ''),
     ('title', 'name'),
     ('project', lambda j, org_map=None: get_project_department(j, org_map)[0]),
     ('department', lambda j, org_map=None: get_project_department(j, org_map)[1]),
