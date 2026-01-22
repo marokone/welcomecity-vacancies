@@ -16,11 +16,15 @@ FIELDS = [
     ('conditions', lambda j: j.get('description_structured', {}).get('условия', '')),
     ('created_at', 'dateCreated'),
     ('updated_at', 'dateUpdated'),
-    ('status', lambda j: 'active'),
+    ('status', 'CONST_ACTIVE'),
 ]
 
 
 def get_value(job, key, org_map=None):
+    # Специальный случай для статуса
+    if key == 'CONST_ACTIVE':
+        return 'active'
+    
     if callable(key):
         try:
             return key(job, org_map=org_map)
