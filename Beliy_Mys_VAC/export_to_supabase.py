@@ -16,10 +16,7 @@ FIELDS = [
     ('conditions', lambda j: j.get('description_structured', {}).get('условия', '')),
     ('created_at', 'dateCreated'),
     ('updated_at', 'dateUpdated'),
-    ('status', 'active'),
-]
-
-
+    ('status', lambda j: 'active'),
 def get_value(job, key, org_map=None):
     if callable(key):
         try:
