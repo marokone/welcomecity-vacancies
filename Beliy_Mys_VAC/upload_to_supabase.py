@@ -1,4 +1,5 @@
 
+import math
 import pandas as pd
 import requests
 from datetime import datetime
@@ -11,23 +12,43 @@ TABLE_NAME = 'vacancies_fw'
 csv_path = 'vacancies_rows.csv'
 df = pd.read_csv(csv_path, dtype=str)
 
+# Жёсткая нормализация значений: NaN/Inf/None/пустые строки -> None
+def _clean(v):
+    if v is None:
+        return None
+    if isinstance(v, float):
+        if math.isnan(v) or math.isinf(v):
+            return None
+    try:
+        if pd.isna(v):
+            return None
+    except Exception:
+        pass
+    if isinstance(v, str):
+        s = v.strip()
+        if s == '' or s.lower() in ('nan', 'none', 'inf', '-inf'):
+            return None
+    return v
+
+df = df.astype(object).applymap(_clean)
+
 headers = {
     'apikey': SUPABASE_API_KEY,
     'Authorization': f'Bearer {SUPABASE_API_KEY}',
     'Content-Type': 'application/json',
-    'Prefer': 'return=minimal,resolution=merge-duplicates'
+    # upsert: если запись с таким уникальным ключом есть, она будет перезаписана
+    'Prefer': 'resolution=merge-duplicates,return=minimal'
 }
 
 batch_size = 50  # Можно увеличить/уменьшить при необходимости
 # Массовая вставка (bulk insert)
-data = df.where(pd.notnull(df), None).to_dict(orient='records')
+data = df.to_dict(orient='records')
 
 # Заполняем пустые updated_at корректной датой
 for row in data:
     if not row.get('updated_at') or str(row.get('updated_at')).strip() == '' or str(row.get('updated_at')).lower() == 'none':
         row['updated_at'] = datetime.utcnow().isoformat()
 
-batch_size = 50  # Можно увеличить/уменьшить при необходимости
 for i in range(0, len(data), batch_size):
     batch = data[i:i+batch_size]
     response = requests.post(
