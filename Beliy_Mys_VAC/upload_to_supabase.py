@@ -66,7 +66,6 @@ if df_new.empty:
     print('Новых вакансий нет, загрузка пропущена')
     exit(0)
 
-batch_size = 50  # Можно увеличить/уменьшить при необходимости
 # Массовая вставка (bulk insert) только новых записей
 
 # Дополнительная очистка на всякий случай перед сериализацией в JSON
@@ -84,18 +83,22 @@ for row in data:
     if not row.get('status') or str(row.get('status')).strip() == '' or str(row.get('status')).lower() == 'none':
         row['status'] = 'active'
 
-for i in range(0, len(data), batch_size):
-    batch = data[i:i+batch_size]
-    print(f'DEBUG: отправляю batch {i+1}..{i+len(batch)}, job_ids = {[r.get("job_id") for r in batch[:3]]}...')
+# Вставляем по одной записи, пропуская дубликаты
+success_count = 0
+for i, row in enumerate(data, 1):
+    print(f'DEBUG: отправляю запись {i}/{len(data)}, job_id = {row.get("job_id")}')
     response = requests.post(
         f'{SUPABASE_URL}/rest/v1/{TABLE_NAME}',
         headers=headers,
-        json=batch
+        json=[row]  # Отправляем массив из одного элемента
     )
     if not response.ok:
-        print(f'Ошибка при вставке с {i+1} по {i+len(batch)}:', response.text)
-        break  # Останавливаем на первой ошибке
+        if 'already exists' in response.text or '23505' in response.text:
+            print(f'  Пропущено (дубликат): job_id {row.get("job_id")}')
+        else:
+            print(f'  Ошибка: {response.text}')
     else:
-        print(f'Вставлено строк: {len(batch)}')
+        success_count += 1
+        print(f'  Вставлено')
 
-print('Импорт завершён')
+print(f'Импорт завершён. Успешно вставлено: {success_count} из {len(data)}')
