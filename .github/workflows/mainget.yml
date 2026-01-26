@@ -14,7 +14,7 @@ jobs:
 
       - name: Debug FriendWork API response
         run: |
-          resp=$(curl -s -X GET \
+          resp=$(curl -s -X POST \
             --header 'Accept: application/json' \
             --header 'Content-Type: application/json' \
             --header "Authorization: Bearer ${{ secrets.FRIENDWORK_API_TOKEN }}" \
@@ -28,7 +28,7 @@ jobs:
           count=50
           jobids=()
           while :; do
-            resp=$(curl -s -X GET \
+            resp=$(curl -s -X POST \
               --header 'Accept: application/json' \
               --header 'Content-Type: application/json' \
               --header "Authorization: Bearer ${{ secrets.FRIENDWORK_API_TOKEN }}" \
