@@ -14,11 +14,11 @@ jobs:
 
       - name: Debug FriendWork API response
         run: |
-          resp=$(curl -s -X POST \
+          resp=$(curl -s --request GET \
             --header 'Accept: application/json' \
             --header 'Content-Type: application/json' \
             --header "Authorization: Bearer ${{ secrets.FRIENDWORK_API_TOKEN }}" \
-            -d "{\"statuses\": [\"open\", \"onHold\"], \"paging\": { \"page\": 0, \"count\": 1 }}" \
+            --data "{\"statuses\": [\"open\", \"onHold\"], \"paging\": { \"page\": 0, \"count\": 1 }}" \
             'https://api.friend.work/jobs')
           echo "$resp"
 
@@ -28,11 +28,11 @@ jobs:
           count=50
           jobids=()
           while :; do
-            resp=$(curl -s -X POST \
+            resp=$(curl -s --request GET \
               --header 'Accept: application/json' \
               --header 'Content-Type: application/json' \
               --header "Authorization: Bearer ${{ secrets.FRIENDWORK_API_TOKEN }}" \
-              -d "{\"statuses\": [\"open\", \"onHold\"], \"paging\": { \"page\": $page, \"count\": $count }}" \
+              --data "{\"statuses\": [\"open\", \"onHold\"], \"paging\": { \"page\": $page, \"count\": $count }}" \
               'https://api.friend.work/jobs')
             items=$(echo "$resp" | jq '.Items')
             n=$(echo "$items" | jq 'length')
