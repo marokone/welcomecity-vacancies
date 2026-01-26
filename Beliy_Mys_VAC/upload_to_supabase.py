@@ -2,7 +2,7 @@
 import math
 import pandas as pd
 import requests
-from datetime import datetime
+from datetime import datetime, timezone
 
 SUPABASE_URL = 'https://vhbiezamhpyejdqvvwuj.supabase.co'
 SUPABASE_API_KEY = 'sb_publishable_PEUJVHuw56T2d3vA2iVMZA_POiY0MCX'
@@ -53,16 +53,24 @@ existing_ids = {str(item.get('job_id')) for item in existing_resp.json() if item
 df['job_id'] = df['job_id'].astype(str)
 df_new = df[~df['job_id'].isin(existing_ids)].copy()
 
+# Дополнительная нормализация после фильтра: гарантируем отсутствие NaN
+df_new = df_new.where(pd.notna(df_new), None)
+
 if df_new.empty:
     print('Новых вакансий нет, загрузка пропущена')
     exit(0)
 
 batch_size = 50  # Можно увеличить/уменьшить при необходимости
 # Массовая вставка (bulk insert) только новых записей
-data = df_new.to_dict(orient='records')
+
+# Дополнительная очистка на всякий случай перед сериализацией в JSON
+def _clean_record(rec: dict) -> dict:
+    return {k: _clean(v) for k, v in rec.items()}
+
+data = [_clean_record(rec) for rec in df_new.to_dict(orient='records')]
 
 for row in data:
-    now_iso = datetime.utcnow().isoformat()
+    now_iso = datetime.now(timezone.utc).isoformat()
     if not row.get('updated_at') or str(row.get('updated_at')).strip() == '' or str(row.get('updated_at')).lower() == 'none':
         row['updated_at'] = now_iso
     if not row.get('created_at') or str(row.get('created_at')).strip() == '' or str(row.get('created_at')).lower() == 'none':
