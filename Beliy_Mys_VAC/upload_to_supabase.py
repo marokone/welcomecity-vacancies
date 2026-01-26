@@ -48,10 +48,16 @@ existing_resp = requests.get(
 )
 existing_resp.raise_for_status()
 existing_ids = {str(item.get('job_id')) for item in existing_resp.json() if item.get('job_id') is not None}
+print(f'DEBUG: существующих job_id в Supabase: {len(existing_ids)}')
+print(f'DEBUG: примеры: {sorted(list(existing_ids))[-5:]}')
 
 # Оставляем только новые вакансии
 df['job_id'] = df['job_id'].astype(str)
+print(f'DEBUG: всего job_id в CSV: {len(df)}')
+print(f'DEBUG: примеры CSV: {sorted(df["job_id"].unique())[-5:]}')
+
 df_new = df[~df['job_id'].isin(existing_ids)].copy()
+print(f'DEBUG: новых job_id (не в Supabase): {len(df_new)}')
 
 # Дополнительная нормализация после фильтра: гарантируем отсутствие NaN
 df_new = df_new.where(pd.notna(df_new), None)
@@ -80,6 +86,7 @@ for row in data:
 
 for i in range(0, len(data), batch_size):
     batch = data[i:i+batch_size]
+    print(f'DEBUG: отправляю batch {i+1}..{i+len(batch)}, job_ids = {[r.get("job_id") for r in batch[:3]]}...')
     response = requests.post(
         f'{SUPABASE_URL}/rest/v1/{TABLE_NAME}',
         headers=headers,
@@ -87,6 +94,7 @@ for i in range(0, len(data), batch_size):
     )
     if not response.ok:
         print(f'Ошибка при вставке с {i+1} по {i+len(batch)}:', response.text)
+        break  # Останавливаем на первой ошибке
     else:
         print(f'Вставлено строк: {len(batch)}')
 
