@@ -33,21 +33,42 @@ def _clean(v):
 # pandas 3.0 убрал applymap для DataFrame; маппим по колонкам
 df = df.astype(object).apply(lambda col: col.map(_clean))
 
-# Грузим только то, что не хотим затирать в таблице вручную
-columns_to_upload = ['job_id', 'title']
-df = df[columns_to_upload]
-
 headers = {
     'apikey': SUPABASE_API_KEY,
     'Authorization': f'Bearer {SUPABASE_API_KEY}',
     'Content-Type': 'application/json',
     # upsert: если запись с таким уникальным ключом есть, она будет перезаписана
-    'Prefer': 'resolution=merge-duplicates,return=minimal'
+    'Prefer': 'resolution=merge-duplicates,return-minimal'
 }
 
+# Берём существующие job_id, чтобы не трогать старые записи
+existing_resp = requests.get(
+    f"{SUPABASE_URL}/rest/v1/{TABLE_NAME}?select=job_id",
+    headers=headers,
+)
+existing_resp.raise_for_status()
+existing_ids = {str(item.get('job_id')) for item in existing_resp.json() if item.get('job_id') is not None}
+
+# Оставляем только новые вакансии
+df['job_id'] = df['job_id'].astype(str)
+df_new = df[~df['job_id'].isin(existing_ids)].copy()
+
+if df_new.empty:
+    print('Новых вакансий нет, загрузка пропущена')
+    exit(0)
+
 batch_size = 50  # Можно увеличить/уменьшить при необходимости
-# Массовая вставка (bulk insert)
-data = df.to_dict(orient='records')
+# Массовая вставка (bulk insert) только новых записей
+data = df_new.to_dict(orient='records')
+
+for row in data:
+    now_iso = datetime.utcnow().isoformat()
+    if not row.get('updated_at') or str(row.get('updated_at')).strip() == '' or str(row.get('updated_at')).lower() == 'none':
+        row['updated_at'] = now_iso
+    if not row.get('created_at') or str(row.get('created_at')).strip() == '' or str(row.get('created_at')).lower() == 'none':
+        row['created_at'] = now_iso
+    if not row.get('status') or str(row.get('status')).strip() == '' or str(row.get('status')).lower() == 'none':
+        row['status'] = 'active'
 
 for i in range(0, len(data), batch_size):
     batch = data[i:i+batch_size]
