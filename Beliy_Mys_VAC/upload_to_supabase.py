@@ -33,6 +33,10 @@ def _clean(v):
 # pandas 3.0 убрал applymap для DataFrame; маппим по колонкам
 df = df.astype(object).apply(lambda col: col.map(_clean))
 
+# Грузим только то, что не хотим затирать в таблице вручную
+columns_to_upload = ['job_id', 'title']
+df = df[columns_to_upload]
+
 headers = {
     'apikey': SUPABASE_API_KEY,
     'Authorization': f'Bearer {SUPABASE_API_KEY}',
@@ -44,11 +48,6 @@ headers = {
 batch_size = 50  # Можно увеличить/уменьшить при необходимости
 # Массовая вставка (bulk insert)
 data = df.to_dict(orient='records')
-
-# Заполняем пустые updated_at корректной датой
-for row in data:
-    if not row.get('updated_at') or str(row.get('updated_at')).strip() == '' or str(row.get('updated_at')).lower() == 'none':
-        row['updated_at'] = datetime.utcnow().isoformat()
 
 for i in range(0, len(data), batch_size):
     batch = data[i:i+batch_size]
