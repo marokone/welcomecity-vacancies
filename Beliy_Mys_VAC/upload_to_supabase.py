@@ -30,7 +30,8 @@ def _clean(v):
             return None
     return v
 
-df = df.astype(object).applymap(_clean)
+# pandas 3.0 убрал applymap для DataFrame; маппим по колонкам
+df = df.astype(object).apply(lambda col: col.map(_clean))
 
 headers = {
     'apikey': SUPABASE_API_KEY,
