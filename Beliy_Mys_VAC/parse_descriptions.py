@@ -2,7 +2,7 @@ import json
 from bs4 import BeautifulSoup
 import re
 
-# Ключевые слова для поиска блоков
+# Ключевые слова для поиска блоков (на случай если description заполнен старым способом)
 BLOCKS = [
     ('описание', ['описание', 'о компании', 'о вакансии']),
     ('обязанности', ['обязанности', 'функциональные обязанности', 'чем предстоит заниматься']),
@@ -34,12 +34,45 @@ def extract_blocks(html):
                 result[key] = result[key][len(v):].lstrip(': .-\n')
     return result
 
+def clean_html(html):
+    """Убирает HTML-теги и возвращает чистый текст"""
+    if not html:
+        return ''
+    soup = BeautifulSoup(html, 'html.parser')
+    return soup.get_text('\n', strip=True)
+
+def get_custom_field_value(custom_fields, system_name):
+    """Достаёт значение кастомного поля по SystemName"""
+    for field in custom_fields:
+        if field.get('SystemName') == system_name:
+            return clean_html(field.get('Value', ''))
+    return ''
+
 def main():
     with open('jobs_full.json', encoding='utf-8') as f:
         jobs = json.load(f)
+    
     for job in jobs:
-        desc = job.get('description') or ''
-        job['description_structured'] = extract_blocks(desc)
+        custom_fields = job.get('customFieldValues', [])
+        
+        # Достаём кастомные поля
+        requirements = get_custom_field_value(custom_fields, 'Toruk_Job_Requirements')
+        responsibilities = get_custom_field_value(custom_fields, 'Toruk_Job_Responsibilities')
+        conditions = get_custom_field_value(custom_fields, 'Toruk_Job_Conditions')
+        
+        # Если кастомные поля заполнены — используем их
+        if requirements or responsibilities or conditions:
+            job['description_structured'] = {
+                'описание': clean_html(job.get('description', '')),
+                'требования': requirements,
+                'обязанности': responsibilities,
+                'условия': conditions
+            }
+        else:
+            # Иначе пытаемся распарсить старым способом из description
+            desc = job.get('description') or ''
+            job['description_structured'] = extract_blocks(desc)
+    
     with open('jobs_structured.json', 'w', encoding='utf-8') as f:
         json.dump(jobs, f, ensure_ascii=False, indent=2)
 
