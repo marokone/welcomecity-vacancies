@@ -18,8 +18,8 @@ result = pd.DataFrame({
     'requirements': src['requirements'],
     'responsibilities': src['responsibilities'],
     'conditions': src['conditions'],
-    'format': '',
-    'status': '',
+    'format': '',  # если нужно заполнить - добавь логику
+    'status': src['status'],  # берем из исходных данных (там 'active')
     'created_at': src['created_at'],
     'updated_at': src['updated_at'],
     'job_id': src['job_id'],
@@ -29,4 +29,6 @@ result = pd.DataFrame({
 
 # Сохраняем с BOM для Excel
 result.to_csv(output_path, index=False, encoding='utf-8-sig', quoting=csv.QUOTE_NONNUMERIC)
-print('Готово: vacancies_rows.csv')
+print('✅ Готово: vacancies_rows.csv')
+print(f'📊 Обработано записей: {len(src)}')
+print('📁 Поля в файле:', ', '.join(result.columns.tolist()))
