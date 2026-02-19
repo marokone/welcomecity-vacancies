@@ -59,13 +59,61 @@ jobs:
             fi
           done
           printf '%s\n' "${details[@]}" | jq -s '.' > Beliy_Mys_VAC/jobs_full.json
+
+      # 🔍 ДИАГНОСТИКА - ЧТО ПОЛУЧИЛИ ОТ API
+      - name: 🔍 ПРОВЕРКА ДАННЫХ ИЗ API
+        run: |
+          echo "===================================="
+          echo "🔍 АНАЛИЗ ОТВЕТА API"
+          echo "===================================="
           
-          # Проверяем структуру полей в API
-          echo "📊 Структура первой вакансии:"
-          jq '.[0] | keys' Beliy_Mys_VAC/jobs_full.json
+          # Проверяем существует ли файл
+          if [ ! -f Beliy_Mys_VAC/jobs_full.json ]; then
+            echo "❌ Файл jobs_full.json НЕ СОЗДАН!"
+            exit 1
+          fi
           
-          echo "📊 Наличие новых полей (requirements, responsibilities, conditions):"
-          jq '.[0] | {has_requirements: has("requirements"), has_responsibilities: has("responsibilities"), has_conditions: has("conditions")}' Beliy_Mys_VAC/jobs_full.json
+          # Смотрим размер файла
+          echo "📊 Размер файла: $(wc -l < Beliy_Mys_VAC/jobs_full.json) строк"
+          
+          # Количество вакансий
+          count=$(jq length Beliy_Mys_VAC/jobs_full.json)
+          echo "📊 Количество вакансий в файле: $count"
+          
+          if [ "$count" -eq "0" ]; then
+            echo "❌ Файл пуст! Вакансий нет."
+            echo "Содержимое файла:"
+            cat Beliy_Mys_VAC/jobs_full.json
+          else
+            echo "✅ Найдено вакансий: $count"
+            echo ""
+            echo "📋 ПЕРВАЯ ВАКАНСИЯ (полностью):"
+            echo "----------------------------------------"
+            jq '.[0]' Beliy_Mys_VAC/jobs_full.json
+            
+            echo ""
+            echo "🔑 ВСЕ ПОЛЯ ПЕРВОЙ ВАКАНСИИ:"
+            echo "----------------------------------------"
+            jq '.[0] | keys' Beliy_Mys_VAC/jobs_full.json
+            
+            echo ""
+            echo "📝 ПОИСК НУЖНЫХ ПОЛЕЙ:"
+            echo "----------------------------------------"
+            echo "Поля с 'description':"
+            jq '.[0] | with_entries(select(.key | contains("description")))' Beliy_Mys_VAC/jobs_full.json
+            
+            echo ""
+            echo "Поля с 'requirement':"
+            jq '.[0] | with_entries(select(.key | contains("requirement")))' Beliy_Mys_VAC/jobs_full.json
+            
+            echo ""
+            echo "Поля с 'responsibilit':"
+            jq '.[0] | with_entries(select(.key | contains("responsibilit")))' Beliy_Mys_VAC/jobs_full.json
+            
+            echo ""
+            echo "Поля с 'condition':"
+            jq '.[0] | with_entries(select(.key | contains("condition")))' Beliy_Mys_VAC/jobs_full.json
+          fi
 
       - name: Upload jobs_full.json
         uses: actions/upload-artifact@v4
@@ -73,17 +121,10 @@ jobs:
           name: friendwork-jobs-full
           path: Beliy_Mys_VAC/jobs_full.json
 
-      - name: Debug jobs_full.json
-        run: |
-          echo "📋 Первые 3 вакансии:"
-          cat Beliy_Mys_VAC/jobs_full.json | jq '.[:3] | .[] | {jobId: .jobId, title: .name, has_requirements: has("requirements")}'
-
       - name: Установить Python и зависимости
         run: |
           python -m pip install --upgrade pip
-          pip install pandas requests  # Убрали beautifulsoup4 и lxml - они больше не нужны!
-
-      # ❌ Шаг Парсинг описаний вакансий - УДАЛЕН! Больше не нужен
+          pip install pandas requests
 
       - name: Экспорт для Supabase
         run: |
@@ -93,8 +134,6 @@ jobs:
             echo "📊 jobs_supabase.csv создан"
             echo "📊 Первые 5 строк:"
             head -5 Beliy_Mys_VAC/jobs_supabase.csv
-            echo "📊 Проверка наличия данных в requirements/responsibilities/conditions:"
-            tail -n +2 Beliy_Mys_VAC/jobs_supabase.csv | cut -d',' -f7,8,9 | head -5
           else
             echo "❌ jobs_supabase.csv НЕ создан!"
           fi
@@ -108,7 +147,7 @@ jobs:
             echo "📊 vacancies_rows.csv создан"
             echo "📊 Первые 5 строк:"
             head -5 Beliy_Mys_VAC/vacancies_rows.csv
-            echo "📊 Проверка наличия данных в requirements/responsibilities/conditions:"
+            echo "📊 Проверка данных в requirements/responsibilities/conditions:"
             tail -n +2 Beliy_Mys_VAC/vacancies_rows.csv | cut -d',' -f6,7,8 | head -5
           else
             echo "❌ vacancies_rows.csv НЕ создан!"
@@ -121,16 +160,14 @@ jobs:
           name: friendwork-jobs-supabase
           path: Beliy_Mys_VAC/jobs_supabase.csv
 
-      - name: Загрузка данных в Supabase
-        run: |
-          python upload_to_supabase.py
-          echo "✅ Загрузка в Supabase завершена"
-        working-directory: ${{ github.workspace }}/Beliy_Mys_VAC
-
       - name: Upload vacancies_rows.csv
         uses: actions/upload-artifact@v4
         with:
           name: friendwork-vacancies-rows
           path: Beliy_Mys_VAC/vacancies_rows.csv
 
-      # ❌ Upload jobs_structured.json - ТОЖЕ УДАЛЕН! Этот файл больше не создается
+      - name: Загрузка данных в Supabase
+        run: |
+          python upload_to_supabase.py
+          echo "✅ Загрузка в Supabase завершена"
+        working-directory: ${{ github.workspace }}/Beliy_Mys_VAC
