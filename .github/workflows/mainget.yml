@@ -76,14 +76,12 @@ jobs:
           pip install beautifulsoup4 lxml pandas requests
 
       - name: Парсинг описаний вакансий
-  run: python -u parse_descriptions.py
-  working-directory: ${{ github.workspace }}/Beliy_Mys_VAC
-
+        run: python -u parse_descriptions.py
+        working-directory: ${{ github.workspace }}/Beliy_Mys_VAC
 
       - name: Экспорт для Supabase
         run: python export_to_supabase.py
         working-directory: ${{ github.workspace }}/Beliy_Mys_VAC
-
 
       - name: Преобразование в vacancies_rows.csv
         run: python convert_to_vacancies_rows.py
@@ -94,8 +92,6 @@ jobs:
         with:
           name: friendwork-jobs-supabase
           path: Beliy_Mys_VAC/jobs_supabase.csv
-
-
 
       - name: Загрузка данных в Supabase
         run: python upload_to_supabase.py
