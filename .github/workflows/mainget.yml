@@ -24,15 +24,9 @@ jobs:
 
       - name: Fetch all FriendWork jobs and details
         run: |
-          # Создаем папку если её нет
-          mkdir -p Beliy_Mys_VAC
-          
           page=0
           count=50
           jobids=()
-          
-          echo "🔄 Начинаем загрузку списка вакансий..."
-          
           while :; do
             resp=$(curl -s --request GET \
               --header 'Accept: application/json' \
@@ -40,64 +34,32 @@ jobs:
               --header "Authorization: Bearer ${{ secrets.FRIENDWORK_API_TOKEN }}" \
               --data "{\"statuses\": [\"open\", \"onHold\"], \"paging\": { \"page\": $page, \"count\": $count }}" \
               'https://api.friend.work/jobs')
-            
             items=$(echo "$resp" | jq '.Items')
             n=$(echo "$items" | jq 'length')
-            
-            echo "  Страница $page: найдено $n вакансий"
-            
             if [ "$n" -eq 0 ]; then
               break
             fi
-            
             ids=$(echo "$items" | jq -r '.[].jobId')
             for id in $ids; do
               jobids+=($id)
             done
-            
             page=$((page+1))
           done
 
-          echo "✅ Всего найдено вакансий: ${#jobids[@]}"
-
-          if [ ${#jobids[@]} -eq 0 ]; then
-            echo "❌ Нет вакансий для загрузки"
-            echo '[]' > Beliy_Mys_VAC/jobs_full.json
-            exit 0
-          fi
-
-          # Загружаем детали вакансий
-          echo "🔄 Загружаем детали вакансий..."
-          echo '[' > Beliy_Mys_VAC/jobs_full.json
-          first=1
-          total=${#jobids[@]}
-          current=0
-          
+          details=()
           for jobid in "${jobids[@]}"; do
-            current=$((current+1))
-            echo "  Загружаю $current из $total: вакансия $jobid"
-            
             detail=$(curl -s -X GET \
               --header 'Accept: application/json' \
               --header "Authorization: Bearer ${{ secrets.FRIENDWORK_API_TOKEN }}" \
               "https://api.friend.work/jobs/$jobid")
-            
-            # Проверяем что ответ валидный
+            # Добавляем только валидные JSON-объекты
             if echo "$detail" | jq empty 2>/dev/null; then
-              if [ $first -eq 1 ]; then
-                first=0
-              else
-                echo ',' >> Beliy_Mys_VAC/jobs_full.json
-              fi
-              echo "$detail" >> Beliy_Mys_VAC/jobs_full.json
-              echo "    ✅ Успешно"
-            else
-              echo "    ❌ Ошибка: невалидный JSON"
+              details+=("$detail")
             fi
           done
-          echo ']' >> Beliy_Mys_VAC/jobs_full.json
-          
-          echo "✅ Готово: Beliy_Mys_VAC/jobs_full.json"
+
+          # Собираем массив JSON-объектов
+          printf '%s\n' "${details[@]}" | jq -s '.' > Beliy_Mys_VAC/jobs_full.json
 
       - name: Upload jobs_full.json
         uses: actions/upload-artifact@v4
@@ -106,30 +68,12 @@ jobs:
           path: Beliy_Mys_VAC/jobs_full.json
 
       - name: Debug jobs_full.json
-        run: |
-          echo "📊 Содержимое jobs_full.json:"
-          if [ -f Beliy_Mys_VAC/jobs_full.json ]; then
-            count=$(jq length Beliy_Mys_VAC/jobs_full.json)
-            echo "Количество вакансий: $count"
-            if [ "$count" -gt 0 ]; then
-              echo "Первая вакансия:"
-              jq '.[0]' Beliy_Mys_VAC/jobs_full.json
-            else
-              echo "❌ Файл пуст"
-              cat Beliy_Mys_VAC/jobs_full.json
-            fi
-          else
-            echo "❌ Файл не найден"
-          fi
+        run: cat Beliy_Mys_VAC/jobs_full.json
 
       - name: Установить Python и зависимости
         run: |
           python -m pip install --upgrade pip
-          pip install beautifulsoup4 lxml pandas requests
-
-      - name: Парсинг описаний вакансий
-        run: python -u parse_descriptions.py
-        working-directory: Beliy_Mys_VAC
+          pip install pandas requests
 
       - name: Экспорт для Supabase
         run: python export_to_supabase.py
@@ -154,9 +98,3 @@ jobs:
         with:
           name: friendwork-vacancies-rows
           path: Beliy_Mys_VAC/vacancies_rows.csv
-
-      - name: Upload jobs_structured.json
-        uses: actions/upload-artifact@v4
-        with:
-          name: friendwork-jobs-structured
-          path: Beliy_Mys_VAC/jobs_structured.json
