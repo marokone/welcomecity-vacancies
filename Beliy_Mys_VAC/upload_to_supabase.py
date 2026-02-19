@@ -1,4 +1,3 @@
-
 import math
 import pandas as pd
 import requests
@@ -8,12 +7,11 @@ SUPABASE_URL = 'https://vhbiezamhpyejdqvvwuj.supabase.co'
 SUPABASE_API_KEY = 'sb_publishable_PEUJVHuw56T2d3vA2iVMZA_POiY0MCX'
 TABLE_NAME = 'vacancies_fw'
 
-# Загрузка данных из CSV
-csv_path = 'vacancies_rows.csv'
-df = pd.read_csv(csv_path, dtype=str)
+# Поля, которые могут быть заполнены вручную в Тильде
+MANUAL_FIELDS = ['description', 'requirements', 'responsibilities', 'conditions']
 
-# Жёсткая нормализация значений: NaN/Inf/None/пустые строки -> None
 def _clean(v):
+    """Очистка значений: NaN/Inf/None/пустые строки -> None"""
     if v is None:
         return None
     if isinstance(v, float):
@@ -30,75 +28,106 @@ def _clean(v):
             return None
     return v
 
-# pandas 3.0 убрал applymap для DataFrame; маппим по колонкам
-df = df.astype(object).apply(lambda col: col.map(_clean))
+def is_field_empty(value):
+    """Проверяет, пустое ли поле (None, NaN, пустая строка)"""
+    cleaned = _clean(value)
+    return cleaned is None or cleaned == ''
+
+# Загрузка данных из CSV
+csv_path = 'vacancies_rows.csv'
+df_new = pd.read_csv(csv_path, dtype=str)
+print(f'📥 Загружено записей из CSV: {len(df_new)}')
+
+# Нормализация новых данных
+df_new = df_new.astype(object).apply(lambda col: col.map(_clean))
 
 headers = {
     'apikey': SUPABASE_API_KEY,
     'Authorization': f'Bearer {SUPABASE_API_KEY}',
     'Content-Type': 'application/json',
-    # upsert: если запись с таким уникальным ключом есть, она будет перезаписана
-    'Prefer': 'resolution=merge-duplicates,return-minimal'
 }
 
-# Берём существующие job_id, чтобы не трогать старые записи
+# Получаем все существующие записи из Supabase
+print('🔍 Получаем текущие данные из Supabase...')
 existing_resp = requests.get(
-    f"{SUPABASE_URL}/rest/v1/{TABLE_NAME}?select=job_id",
+    f"{SUPABASE_URL}/rest/v1/{TABLE_NAME}?select=*",
     headers=headers,
 )
 existing_resp.raise_for_status()
-existing_ids = {str(item.get('job_id')) for item in existing_resp.json() if item.get('job_id') is not None}
-print(f'DEBUG: существующих job_id в Supabase: {len(existing_ids)}')
-print(f'DEBUG: примеры: {sorted(list(existing_ids))[-5:]}')
+existing_data = existing_resp.json()
+print(f'📊 Найдено записей в Supabase: {len(existing_data)}')
 
-# Оставляем только новые вакансии
-df['job_id'] = df['job_id'].astype(str)
-print(f'DEBUG: всего job_id в CSV: {len(df)}')
-print(f'DEBUG: примеры CSV: {sorted(df["job_id"].unique())[-5:]}')
+# Создаем словарь существующих записей по job_id
+existing_map = {str(item['job_id']): item for item in existing_data if item.get('job_id')}
 
-df_new = df[~df['job_id'].isin(existing_ids)].copy()
-print(f'DEBUG: новых job_id (не в Supabase): {len(df_new)}')
+# Подготавливаем данные для обновления
+records_to_upsert = []
 
-# Дополнительная нормализация после фильтра: гарантируем отсутствие NaN
-df_new = df_new.where(pd.notna(df_new), None)
+for _, row in df_new.iterrows():
+    record = row.to_dict()
+    job_id = str(record.get('job_id'))
+    
+    # Если запись уже существует в Supabase
+    if job_id in existing_map:
+        existing = existing_map[job_id]
+        
+        # Для каждого поля проверяем: если новое значение пустое, оставляем существующее
+        for field in MANUAL_FIELDS:
+            if is_field_empty(record.get(field)):
+                # Если в новых данных поле пустое, оставляем то, что уже есть в БД
+                record[field] = existing.get(field)
+                print(f'  🔄 Поле {field} для job_id {job_id}: оставляем существующее значение')
+            else:
+                print(f'  ✨ Поле {field} для job_id {job_id}: обновляем из френдворка')
+        
+        # Обновляем даты
+        now_iso = datetime.now(timezone.utc).isoformat()
+        record['updated_at'] = now_iso
+        
+        # Сохраняем оригинальную дату создания, если она была
+        if not is_field_empty(record.get('created_at')):
+            record['created_at'] = existing.get('created_at', record.get('created_at'))
+    
+    records_to_upsert.append(record)
 
-if df_new.empty:
-    print('Новых вакансий нет, загрузка пропущена')
+print(f'\n📦 Подготовлено записей для upsert: {len(records_to_upsert)}')
+
+if not records_to_upsert:
+    print('❌ Нет данных для загрузки')
     exit(0)
 
-# Массовая вставка (bulk insert) только новых записей
+# Настройки для upsert
+upsert_headers = headers.copy()
+upsert_headers['Prefer'] = 'resolution=merge-duplicates,return-minimal'
 
-# Дополнительная очистка на всякий случай перед сериализацией в JSON
-def _clean_record(rec: dict) -> dict:
-    return {k: _clean(v) for k, v in rec.items()}
+# Отправляем данные
+print('🚀 Отправляем данные в Supabase...')
+response = requests.post(
+    f'{SUPABASE_URL}/rest/v1/{TABLE_NAME}',
+    headers=upsert_headers,
+    json=records_to_upsert
+)
 
-data = [_clean_record(rec) for rec in df_new.to_dict(orient='records')]
-
-for row in data:
-    now_iso = datetime.now(timezone.utc).isoformat()
-    if not row.get('updated_at') or str(row.get('updated_at')).strip() == '' or str(row.get('updated_at')).lower() == 'none':
-        row['updated_at'] = now_iso
-    if not row.get('created_at') or str(row.get('created_at')).strip() == '' or str(row.get('created_at')).lower() == 'none':
-        row['created_at'] = now_iso
-    if not row.get('status') or str(row.get('status')).strip() == '' or str(row.get('status')).lower() == 'none':
-        row['status'] = 'active'
-
-# Вставляем по одной записи, пропуская дубликаты
-success_count = 0
-for i, row in enumerate(data, 1):
-    print(f'DEBUG: отправляю запись {i}/{len(data)}, job_id = {row.get("job_id")}')
-    response = requests.post(
-        f'{SUPABASE_URL}/rest/v1/{TABLE_NAME}',
-        headers=headers,
-        json=[row]  # Отправляем массив из одного элемента
-    )
-    if not response.ok:
-        if 'already exists' in response.text or '23505' in response.text:
-            print(f'  Пропущено (дубликат): job_id {row.get("job_id")}')
+if response.ok:
+    print(f'✅ Успешно загружено/обновлено {len(records_to_upsert)} записей')
+else:
+    print(f'❌ Ошибка: {response.status_code}')
+    print(response.text)
+    
+    # Если массовая не сработала, пробуем по одной для отладки
+    print('\n🔧 DEBUG: пробую по одной записи:')
+    success_count = 0
+    for i, record in enumerate(records_to_upsert, 1):
+        print(f'  Запись {i}, job_id = {record.get("job_id")}')
+        resp = requests.post(
+            f'{SUPABASE_URL}/rest/v1/{TABLE_NAME}',
+            headers=upsert_headers,
+            json=[record]
+        )
+        if resp.ok:
+            success_count += 1
+            print(f'    ✅ Успешно')
         else:
-            print(f'  Ошибка: {response.text}')
-    else:
-        success_count += 1
-        print(f'  Вставлено')
-
-print(f'Импорт завершён. Успешно вставлено: {success_count} из {len(data)}')
+            print(f'    ❌ Ошибка: {resp.text}')
+    
+    print(f'\n📊 Итог: {success_count} из {len(records_to_upsert)} записей загружено')
