@@ -14,13 +14,13 @@ jobs:
 
       - name: Debug FriendWork API response
         run: |
-          echo "🔍 Тестовый запрос (одна вакансия):"
-          curl -s --request GET \
+          resp=$(curl -s --request GET \
             --header 'Accept: application/json' \
             --header 'Content-Type: application/json' \
             --header "Authorization: Bearer ${{ secrets.FRIENDWORK_API_TOKEN }}" \
             --data "{\"statuses\": [\"open\", \"onHold\"], \"paging\": { \"page\": 0, \"count\": 1 }}" \
-            'https://api.friend.work/jobs' | jq '.'
+            'https://api.friend.work/jobs')
+          echo "$resp"
 
       - name: Fetch all FriendWork jobs and details
         run: |
@@ -28,9 +28,9 @@ jobs:
           count=50
           jobids=()
           
+          echo "🔄 Начинаем загрузку списка вакансий..."
+          
           while :; do
-            echo "🔄 Загружаю страницу $page..."
-            
             resp=$(curl -s --request GET \
               --header 'Accept: application/json' \
               --header 'Content-Type: application/json' \
@@ -38,90 +38,63 @@ jobs:
               --data "{\"statuses\": [\"open\", \"onHold\"], \"paging\": { \"page\": $page, \"count\": $count }}" \
               'https://api.friend.work/jobs')
             
-            # Проверяем структуру ответа
             items=$(echo "$resp" | jq '.Items')
-            
-            # Если Items нет, пробуем другие возможные названия
-            if [ "$items" = "null" ]; then
-              items=$(echo "$resp" | jq '.items // .data // .jobs // []')
-            fi
-            
             n=$(echo "$items" | jq 'length')
-            echo "  Найдено на странице: $n"
+            
+            echo "  Страница $page: найдено $n вакансий"
             
             if [ "$n" -eq 0 ]; then
               break
             fi
             
-            # Пробуем разные варианты названия ID
-            ids=$(echo "$items" | jq -r '.[].jobId // .[].id // .[].job_id // empty')
-            
+            ids=$(echo "$items" | jq -r '.[].jobId')
             for id in $ids; do
-              if [ ! -z "$id" ] && [ "$id" != "null" ]; then
-                jobids+=($id)
-                echo "  + Добавлен jobId: $id"
-              fi
+              jobids+=($id)
             done
             
             page=$((page+1))
-            
-            # Если получили меньше чем запрашивали - это последняя страница
-            if [ "$n" -lt "$count" ]; then
-              break
-            fi
           done
-          
-          echo "✅ Всего найдено уникальных jobId: ${#jobids[@]}"
-          
+
+          echo "✅ Всего найдено вакансий: ${#jobids[@]}"
+
           if [ ${#jobids[@]} -eq 0 ]; then
-            echo "❌ Нет вакансий для загрузки. Создаю пустой файл."
+            echo "❌ Нет вакансий для загрузки"
             echo '[]' > Beliy_Mys_VAC/jobs_full.json
             exit 0
           fi
-          
-          # Загружаем детали каждой вакансии
-          details=()
-          success_count=0
+
+          # Простой способ создания JSON (как в рабочем main.yml)
+          echo "🔄 Загружаем детали вакансий..."
+          echo '[' > Beliy_Mys_VAC/jobs_full.json
+          first=1
+          total=${#jobids[@]}
+          current=0
           
           for jobid in "${jobids[@]}"; do
-            echo "🔄 Загружаю детали вакансии $jobid... ($((success_count+1))/${#jobids[@]})"
+            current=$((current+1))
+            echo "  Загружаю $current из $total: вакансия $jobid"
             
             detail=$(curl -s -X GET \
               --header 'Accept: application/json' \
               --header "Authorization: Bearer ${{ secrets.FRIENDWORK_API_TOKEN }}" \
               "https://api.friend.work/jobs/$jobid")
             
-            # Проверяем, что это валидный JSON и не сообщение об ошибке
+            # Проверяем что ответ валидный
             if echo "$detail" | jq empty 2>/dev/null; then
-              # Проверяем, есть ли поля с ошибкой
-              if ! echo "$detail" | jq -e '.error' > /dev/null 2>&1; then
-                details+=("$detail")
-                success_count=$((success_count+1))
-                echo "  ✅ Успешно загружено"
+              if [ $first -eq 1 ]; then
+                first=0
               else
-                echo "  ❌ Ошибка от API: $(echo "$detail" | jq -r '.error.message // .error')"
+                echo ',' >> Beliy_Mys_VAC/jobs_full.json
               fi
+              echo "$detail" >> Beliy_Mys_VAC/jobs_full.json
+              echo "    ✅ Успешно"
             else
-              echo "  ❌ Невалидный JSON ответ"
+              echo "    ❌ Ошибка: невалидный JSON"
             fi
           done
+          echo ']' >> Beliy_Mys_VAC/jobs_full.json
           
-          # Сохраняем все детали
-          if [ ${#details[@]} -gt 0 ]; then
-            printf '%s\n' "${details[@]}" | jq -s '.' > Beliy_Mys_VAC/jobs_full.json
-            echo "✅ Сохранено ${#details[@]} вакансий в jobs_full.json"
-            
-            # Показываем статистику
-            echo ""
-            echo "📊 Статистика по полям:"
-            jq -r '.[0] | keys | .[]' Beliy_Mys_VAC/jobs_full.json | while read key; do
-              count=$(jq --arg key "$key" '[.[] | has($key)] | map(select(.)) | length' Beliy_Mys_VAC/jobs_full.json)
-              echo "  Поле '$key': есть у $count из ${#details[@]} вакансий"
-            done
-          else
-            echo "❌ Нет данных для сохранения"
-            echo '[]' > Beliy_Mys_VAC/jobs_full.json
-          fi
+          echo "✅ Готово: Beliy_Mys_VAC/jobs_full.json"
 
       - name: Upload jobs_full.json
         uses: actions/upload-artifact@v4
@@ -136,8 +109,15 @@ jobs:
             count=$(jq length Beliy_Mys_VAC/jobs_full.json)
             echo "Количество вакансий: $count"
             if [ "$count" -gt 0 ]; then
-              echo "Первая вакансия:"
-              jq '.[0] | {jobId: .jobId, title: .name, has_req: has("requirements"), has_resp: has("responsibilities"), has_cond: has("conditions")}' Beliy_Mys_VAC/jobs_full.json
+              echo "Первая вакансия (первые 500 символов):"
+              jq '.[0]' Beliy_Mys_VAC/jobs_full.json | head -c 500
+              
+              echo ""
+              echo "🔑 Поля первой вакансии:"
+              jq '.[0] | keys' Beliy_Mys_VAC/jobs_full.json
+            else
+              echo "❌ Файл пуст"
+              cat Beliy_Mys_VAC/jobs_full.json
             fi
           else
             echo "❌ Файл не найден"
@@ -146,7 +126,11 @@ jobs:
       - name: Установить Python и зависимости
         run: |
           python -m pip install --upgrade pip
-          pip install pandas requests
+          pip install beautifulsoup4 lxml pandas requests
+
+      - name: Парсинг описаний вакансий
+        run: python -u parse_descriptions.py
+        working-directory: ${{ github.workspace }}/Beliy_Mys_VAC
 
       - name: Экспорт для Supabase
         run: python export_to_supabase.py
@@ -162,12 +146,18 @@ jobs:
           name: friendwork-jobs-supabase
           path: Beliy_Mys_VAC/jobs_supabase.csv
 
+      - name: Загрузка данных в Supabase
+        run: python upload_to_supabase.py
+        working-directory: ${{ github.workspace }}/Beliy_Mys_VAC
+
       - name: Upload vacancies_rows.csv
         uses: actions/upload-artifact@v4
         with:
           name: friendwork-vacancies-rows
           path: Beliy_Mys_VAC/vacancies_rows.csv
 
-      - name: Загрузка данных в Supabase
-        run: python upload_to_supabase.py
-        working-directory: ${{ github.workspace }}/Beliy_Mys_VAC
+      - name: Upload jobs_structured.json
+        uses: actions/upload-artifact@v4
+        with:
+          name: friendwork-jobs-structured
+          path: Beliy_Mys_VAC/jobs_structured.json
