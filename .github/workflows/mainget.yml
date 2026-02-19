@@ -12,17 +12,83 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Debug FriendWork API response
+      # 🔍 ТЕСТ 1: Самый простой GET запрос
+      - name: 🔍 ТЕСТ 1 - GET без параметров
         run: |
-          resp=$(curl -s --request GET \
+          echo "===================================="
+          echo "🔍 ТЕСТ 1: Простой GET запрос"
+          echo "===================================="
+          curl -v -X GET \
+            --header 'Accept: application/json' \
+            --header "Authorization: Bearer ${{ secrets.FRIENDWORK_API_TOKEN }}" \
+            'https://api.friend.work/jobs'
+          echo ""
+          echo "===================================="
+
+      # 🔍 ТЕСТ 2: GET с пустым телом
+      - name: 🔍 ТЕСТ 2 - GET с пустыми данными
+        run: |
+          echo "===================================="
+          echo "🔍 ТЕСТ 2: GET с пустым JSON"
+          echo "===================================="
+          curl -v -X GET \
+            --header 'Accept: application/json' \
+            --header 'Content-Type: application/json' \
+            --header "Authorization: Bearer ${{ secrets.FRIENDWORK_API_TOKEN }}" \
+            --data '{}' \
+            'https://api.friend.work/jobs'
+          echo ""
+          echo "===================================="
+
+      # 🔍 ТЕСТ 3: POST запрос (может API изменился)
+      - name: 🔍 ТЕСТ 3 - POST запрос
+        run: |
+          echo "===================================="
+          echo "🔍 ТЕСТ 3: POST запрос"
+          echo "===================================="
+          curl -v -X POST \
+            --header 'Accept: application/json' \
+            --header 'Content-Type: application/json' \
+            --header "Authorization: Bearer ${{ secrets.FRIENDWORK_API_TOKEN }}" \
+            --data '{"statuses": ["open", "onHold"], "paging": {"page": 0, "count": 1}}' \
+            'https://api.friend.work/jobs/search'
+          echo ""
+          echo "===================================="
+
+      # 🔍 ТЕСТ 4: Проверка конкретной вакансии
+      - name: 🔍 ТЕСТ 4 - Получение одной вакансии
+        run: |
+          echo "===================================="
+          echo "🔍 ТЕСТ 4: Получение вакансии по ID"
+          echo "===================================="
+          # Попробуем получить вакансию с ID 26084 (из документации)
+          curl -v -X GET \
+            --header 'Accept: application/json' \
+            --header "Authorization: Bearer ${{ secrets.FRIENDWORK_API_TOKEN }}" \
+            'https://api.friend.work/jobs/26084'
+          echo ""
+          echo "===================================="
+
+      # 🔍 ТЕСТ 5: Твой оригинальный запрос
+      - name: 🔍 ТЕСТ 5 - Оригинальный запрос
+        run: |
+          echo "===================================="
+          echo "🔍 ТЕСТ 5: Твой оригинальный запрос"
+          echo "===================================="
+          curl -v --request GET \
             --header 'Accept: application/json' \
             --header 'Content-Type: application/json' \
             --header "Authorization: Bearer ${{ secrets.FRIENDWORK_API_TOKEN }}" \
             --data "{\"statuses\": [\"open\", \"onHold\"], \"paging\": { \"page\": 0, \"count\": 1 }}" \
-            'https://api.friend.work/jobs')
-          echo "$resp"
+            'https://api.friend.work/jobs'
+          echo ""
+          echo "===================================="
 
+      # Если ТЕСТ 4 сработает (получение одной вакансии), 
+      # но остальные нет - значит проблема в поиске
+      
       - name: Fetch all FriendWork jobs and details
+        if: false  # Временно отключаем основной код
         run: |
           page=0
           count=50
@@ -52,48 +118,54 @@ jobs:
               --header 'Accept: application/json' \
               --header "Authorization: Bearer ${{ secrets.FRIENDWORK_API_TOKEN }}" \
               "https://api.friend.work/jobs/$jobid")
-            # Добавляем только валидные JSON-объекты
             if echo "$detail" | jq empty 2>/dev/null; then
               details+=("$detail")
             fi
           done
 
-          # Собираем массив JSON-объектов
           printf '%s\n' "${details[@]}" | jq -s '.' > Beliy_Mys_VAC/jobs_full.json
 
       - name: Upload jobs_full.json
+        if: false
         uses: actions/upload-artifact@v4
         with:
           name: friendwork-jobs-full
           path: Beliy_Mys_VAC/jobs_full.json
 
       - name: Debug jobs_full.json
+        if: false
         run: cat Beliy_Mys_VAC/jobs_full.json
 
       - name: Установить Python и зависимости
+        if: false
         run: |
           python -m pip install --upgrade pip
           pip install pandas requests
 
       - name: Экспорт для Supabase
+        if: false
         run: python export_to_supabase.py
         working-directory: Beliy_Mys_VAC
 
       - name: Преобразование в vacancies_rows.csv
+        if: false
         run: python convert_to_vacancies_rows.py
         working-directory: Beliy_Mys_VAC
 
       - name: Upload jobs_supabase.csv
+        if: false
         uses: actions/upload-artifact@v4
         with:
           name: friendwork-jobs-supabase
           path: Beliy_Mys_VAC/jobs_supabase.csv
 
       - name: Загрузка данных в Supabase
+        if: false
         run: python upload_to_supabase.py
         working-directory: Beliy_Mys_VAC
 
       - name: Upload vacancies_rows.csv
+        if: false
         uses: actions/upload-artifact@v4
         with:
           name: friendwork-vacancies-rows
