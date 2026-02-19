@@ -24,6 +24,9 @@ jobs:
 
       - name: Fetch all FriendWork jobs and details
         run: |
+          # Создаем папку если её нет
+          mkdir -p Beliy_Mys_VAC
+          
           page=0
           count=50
           jobids=()
@@ -63,7 +66,7 @@ jobs:
             exit 0
           fi
 
-          # Простой способ создания JSON (как в рабочем main.yml)
+          # Загружаем детали вакансий
           echo "🔄 Загружаем детали вакансий..."
           echo '[' > Beliy_Mys_VAC/jobs_full.json
           first=1
@@ -109,12 +112,8 @@ jobs:
             count=$(jq length Beliy_Mys_VAC/jobs_full.json)
             echo "Количество вакансий: $count"
             if [ "$count" -gt 0 ]; then
-              echo "Первая вакансия (первые 500 символов):"
-              jq '.[0]' Beliy_Mys_VAC/jobs_full.json | head -c 500
-              
-              echo ""
-              echo "🔑 Поля первой вакансии:"
-              jq '.[0] | keys' Beliy_Mys_VAC/jobs_full.json
+              echo "Первая вакансия:"
+              jq '.[0]' Beliy_Mys_VAC/jobs_full.json
             else
               echo "❌ Файл пуст"
               cat Beliy_Mys_VAC/jobs_full.json
@@ -130,15 +129,15 @@ jobs:
 
       - name: Парсинг описаний вакансий
         run: python -u parse_descriptions.py
-        working-directory: ${{ github.workspace }}/Beliy_Mys_VAC
+        working-directory: Beliy_Mys_VAC
 
       - name: Экспорт для Supabase
         run: python export_to_supabase.py
-        working-directory: ${{ github.workspace }}/Beliy_Mys_VAC
+        working-directory: Beliy_Mys_VAC
 
       - name: Преобразование в vacancies_rows.csv
         run: python convert_to_vacancies_rows.py
-        working-directory: ${{ github.workspace }}/Beliy_Mys_VAC
+        working-directory: Beliy_Mys_VAC
 
       - name: Upload jobs_supabase.csv
         uses: actions/upload-artifact@v4
@@ -148,7 +147,7 @@ jobs:
 
       - name: Загрузка данных в Supabase
         run: python upload_to_supabase.py
-        working-directory: ${{ github.workspace }}/Beliy_Mys_VAC
+        working-directory: Beliy_Mys_VAC
 
       - name: Upload vacancies_rows.csv
         uses: actions/upload-artifact@v4
