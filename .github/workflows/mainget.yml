@@ -45,20 +45,16 @@ jobs:
             done
             page=$((page+1))
           done
-
           details=()
           for jobid in "${jobids[@]}"; do
             detail=$(curl -s -X GET \
               --header 'Accept: application/json' \
               --header "Authorization: Bearer ${{ secrets.FRIENDWORK_API_TOKEN }}" \
               "https://api.friend.work/jobs/$jobid")
-            # Добавляем только валидные JSON-объекты
             if echo "$detail" | jq empty 2>/dev/null; then
               details+=("$detail")
             fi
           done
-
-          # Собираем массив JSON-объектов
           printf '%s\n' "${details[@]}" | jq -s '.' > Beliy_Mys_VAC/jobs_full.json
 
       - name: Upload jobs_full.json
