@@ -10,10 +10,11 @@ FIELDS = [
     ('title', 'name'),
     ('project', lambda j, org_map=None: get_project_department(j, org_map)[0]),
     ('department', lambda j, org_map=None: get_project_department(j, org_map)[1]),
-    ('description', lambda j: j.get('description_structured', {}).get('описание', '')),
-    ('requirements', lambda j: j.get('description_structured', {}).get('требования', '')),
-    ('responsibilities', lambda j: j.get('description_structured', {}).get('обязанности', '')),
-    ('conditions', lambda j: j.get('description_structured', {}).get('условия', '')),
+    # Теперь берем поля напрямую из API!
+    ('description', lambda j: j.get('description', '')),                    # из API
+    ('requirements', lambda j: j.get('requirements', '')),                  # из API
+    ('responsibilities', lambda j: j.get('responsibilities', '')),          # из API  
+    ('conditions', lambda j: j.get('conditions', '')),                      # из API
     ('created_at', 'dateCreated'),
     ('updated_at', 'dateUpdated'),
     ('status', 'CONST_ACTIVE'),
@@ -32,7 +33,6 @@ def get_value(job, key, org_map=None):
             return key(job)
     return job.get(key, '')
 
-# --- Новая функция для поиска project и department ---
 def get_project_department(job, org_map):
     org_unit = job.get('organizationUnit')
     if not org_unit or not isinstance(org_unit, dict):
@@ -58,13 +58,20 @@ def main():
         org_data = json.load(f_org)
         org_map = {unit['foreignKey']: unit for unit in org_data['organizationUnits']}
 
-    with open('jobs_structured.json', encoding='utf-8') as f:
+    # Читаем напрямую из jobs_full.json (ответ API), а не из jobs_structured.json
+    with open('jobs_full.json', encoding='utf-8') as f:
         jobs = json.load(f)
+    
+    print(f"📥 Загружено вакансий из API: {len(jobs)}")
+    
     with open('jobs_supabase.csv', 'w', encoding='utf-8', newline='') as f:
         writer = csv.writer(f)
         writer.writerow([f[0] for f in FIELDS])
+        
+        filled_count = 0
         for job in jobs:
             row = [get_value(job, f[1], org_map=org_map) for f in FIELDS]
+            
             # Преобразуем даты в ISO, если есть
             for i, field in enumerate([f[0] for f in FIELDS]):
                 if field in ('created_at', 'updated_at') and row[i]:
@@ -72,7 +79,15 @@ def main():
                         row[i] = datetime.fromisoformat(row[i]).isoformat()
                     except Exception:
                         pass
+            
             writer.writerow(row)
+            
+            # Статистика по заполненным полям
+            if row[6] or row[7] or row[8] or row[9]:  # description, requirements, responsibilities, conditions
+                filled_count += 1
+        
+        print(f"✅ Создан jobs_supabase.csv")
+        print(f"📊 Вакансий с заполненными полями: {filled_count} из {len(jobs)}")
 
 if __name__ == '__main__':
     main()
