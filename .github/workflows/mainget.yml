@@ -76,8 +76,8 @@ jobs:
           pip install beautifulsoup4 lxml pandas requests
 
       - name: Парсинг описаний вакансий
-        run: python parse_descriptions.py
-        working-directory: ${{ github.workspace }}/Beliy_Mys_VAC
+  run: python -u parse_descriptions.py
+  working-directory: ${{ github.workspace }}/Beliy_Mys_VAC
 
 
       - name: Экспорт для Supabase
