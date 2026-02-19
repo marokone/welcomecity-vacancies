@@ -55,13 +55,23 @@ def main():
     for job in jobs:
         custom_fields = job.get('customFieldValues', [])
         
+        # ОТЛАДКА: показываем что нашли
+        print(f"\n=== JOB {job.get('jobId')} ===")
+        print(f"Кастомных полей: {len(custom_fields)}")
+        
         # Достаём кастомные поля
         requirements = get_custom_field_value(custom_fields, 'Toruk_Job_Requirements')
         responsibilities = get_custom_field_value(custom_fields, 'Toruk_Job_Responsibilities')
         conditions = get_custom_field_value(custom_fields, 'Toruk_Job_Conditions')
         
+        # ОТЛАДКА: показываем что получили
+        print(f"Requirements: {len(requirements)} символов")
+        print(f"Responsibilities: {len(responsibilities)} символов")
+        print(f"Conditions: {len(conditions)} символов")
+        
         # Если кастомные поля заполнены — используем их
         if requirements or responsibilities or conditions:
+            print("✅ Используем кастомные поля")
             job['description_structured'] = {
                 'описание': clean_html(job.get('description', '')),
                 'требования': requirements,
@@ -69,12 +79,15 @@ def main():
                 'условия': conditions
             }
         else:
+            print("⚠️ Кастомные поля пустые, парсим description")
             # Иначе пытаемся распарсить старым способом из description
             desc = job.get('description') or ''
             job['description_structured'] = extract_blocks(desc)
     
     with open('jobs_structured.json', 'w', encoding='utf-8') as f:
         json.dump(jobs, f, ensure_ascii=False, indent=2)
+    
+    print("\n✅ Готово! Сохранено в jobs_structured.json")
 
 if __name__ == '__main__':
     main()
