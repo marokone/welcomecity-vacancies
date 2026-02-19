@@ -45,8 +45,11 @@ jobs:
             done
             page=$((page+1))
           done
+          echo "✅ Найдено вакансий: ${#jobids[@]}"
+          
           details=()
           for jobid in "${jobids[@]}"; do
+            echo "🔄 Загружаю детали вакансии $jobid..."
             detail=$(curl -s -X GET \
               --header 'Accept: application/json' \
               --header "Authorization: Bearer ${{ secrets.FRIENDWORK_API_TOKEN }}" \
@@ -56,6 +59,13 @@ jobs:
             fi
           done
           printf '%s\n' "${details[@]}" | jq -s '.' > Beliy_Mys_VAC/jobs_full.json
+          
+          # Проверяем структуру полей в API
+          echo "📊 Структура первой вакансии:"
+          jq '.[0] | keys' Beliy_Mys_VAC/jobs_full.json
+          
+          echo "📊 Наличие новых полей (requirements, responsibilities, conditions):"
+          jq '.[0] | {has_requirements: has("requirements"), has_responsibilities: has("responsibilities"), has_conditions: has("conditions")}' Beliy_Mys_VAC/jobs_full.json
 
       - name: Upload jobs_full.json
         uses: actions/upload-artifact@v4
@@ -64,23 +74,45 @@ jobs:
           path: Beliy_Mys_VAC/jobs_full.json
 
       - name: Debug jobs_full.json
-        run: cat Beliy_Mys_VAC/jobs_full.json
+        run: |
+          echo "📋 Первые 3 вакансии:"
+          cat Beliy_Mys_VAC/jobs_full.json | jq '.[:3] | .[] | {jobId: .jobId, title: .name, has_requirements: has("requirements")}'
 
       - name: Установить Python и зависимости
         run: |
           python -m pip install --upgrade pip
-          pip install beautifulsoup4 lxml pandas requests
+          pip install pandas requests  # Убрали beautifulsoup4 и lxml - они больше не нужны!
 
-      - name: Парсинг описаний вакансий
-        run: python -u parse_descriptions.py
-        working-directory: ${{ github.workspace }}/Beliy_Mys_VAC
+      # ❌ Шаг Парсинг описаний вакансий - УДАЛЕН! Больше не нужен
 
       - name: Экспорт для Supabase
-        run: python export_to_supabase.py
+        run: |
+          python export_to_supabase.py
+          echo "✅ После export_to_supabase.py:"
+          if [ -f Beliy_Mys_VAC/jobs_supabase.csv ]; then
+            echo "📊 jobs_supabase.csv создан"
+            echo "📊 Первые 5 строк:"
+            head -5 Beliy_Mys_VAC/jobs_supabase.csv
+            echo "📊 Проверка наличия данных в requirements/responsibilities/conditions:"
+            tail -n +2 Beliy_Mys_VAC/jobs_supabase.csv | cut -d',' -f7,8,9 | head -5
+          else
+            echo "❌ jobs_supabase.csv НЕ создан!"
+          fi
         working-directory: ${{ github.workspace }}/Beliy_Mys_VAC
 
       - name: Преобразование в vacancies_rows.csv
-        run: python convert_to_vacancies_rows.py
+        run: |
+          python convert_to_vacancies_rows.py
+          echo "✅ После convert_to_vacancies_rows.py:"
+          if [ -f Beliy_Mys_VAC/vacancies_rows.csv ]; then
+            echo "📊 vacancies_rows.csv создан"
+            echo "📊 Первые 5 строк:"
+            head -5 Beliy_Mys_VAC/vacancies_rows.csv
+            echo "📊 Проверка наличия данных в requirements/responsibilities/conditions:"
+            tail -n +2 Beliy_Mys_VAC/vacancies_rows.csv | cut -d',' -f6,7,8 | head -5
+          else
+            echo "❌ vacancies_rows.csv НЕ создан!"
+          fi
         working-directory: ${{ github.workspace }}/Beliy_Mys_VAC
 
       - name: Upload jobs_supabase.csv
@@ -90,7 +122,9 @@ jobs:
           path: Beliy_Mys_VAC/jobs_supabase.csv
 
       - name: Загрузка данных в Supabase
-        run: python upload_to_supabase.py
+        run: |
+          python upload_to_supabase.py
+          echo "✅ Загрузка в Supabase завершена"
         working-directory: ${{ github.workspace }}/Beliy_Mys_VAC
 
       - name: Upload vacancies_rows.csv
@@ -99,8 +133,4 @@ jobs:
           name: friendwork-vacancies-rows
           path: Beliy_Mys_VAC/vacancies_rows.csv
 
-      - name: Upload jobs_structured.json
-        uses: actions/upload-artifact@v4
-        with:
-          name: friendwork-jobs-structured
-          path: Beliy_Mys_VAC/jobs_structured.json
+      # ❌ Upload jobs_structured.json - ТОЖЕ УДАЛЕН! Этот файл больше не создается
