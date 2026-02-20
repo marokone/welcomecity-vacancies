@@ -78,8 +78,9 @@ print(f'📊 Найдено записей в Supabase: {len(existing_data)}')
 # Создаем словарь существующих записей по job_id
 existing_map = {str(item['job_id']): item for item in existing_data if item.get('job_id')}
 
-# Подготавливаем данные для обновления
-records_to_upsert = []
+# Подготавливаем данные для обновления (только пустые поля)
+records_to_update = []
+records_to_insert = []
 
 for record in records:
     job_id = str(record.get('job_id', ''))
@@ -92,23 +93,37 @@ for record in records:
     if job_id in existing_map:
         existing = existing_map[job_id]
         
-        # Для каждого поля проверяем: если новое значение пустое, оставляем существующее
+        # Создаем запись для обновления только пустых полей
+        update_record = {}
+        updated_fields = []
+        
+        # Проверяем каждое поле в существующей записи
         for field in MANUAL_FIELDS:
-            if is_field_empty(record.get(field)):
-                record[field] = existing.get(field)
-                print(f'  🔄 Поле {field} для job_id {job_id}: оставляем существующее значение')
+            existing_value = existing.get(field)
+            new_value = record.get(field)
+            
+            # Если в Supabase поле пустое, И во френдворке есть данные
+            if is_field_empty(existing_value) and not is_field_empty(new_value):
+                update_record[field] = new_value
+                updated_fields.append(field)
+                print(f'  ✨ Поле {field} для job_id {job_id}: заполняем пустое поле данными из френдворка')
             else:
-                print(f'  ✨ Поле {field} для job_id {job_id}: обновляем из френдворка')
+                print(f'  🔄 Поле {field} для job_id {job_id}: оставляем как есть')
         
-        # Обновляем даты
-        now_iso = datetime.now(timezone.utc).isoformat()
-        record['updated_at'] = now_iso
-        
-        # Сохраняем оригинальную дату создания
-        if is_field_empty(record.get('created_at')):
-            record['created_at'] = existing.get('created_at', now_iso)
+        # Если есть что обновлять
+        if updated_fields:
+            # Добавляем job_id в update_record для фильтра
+            update_record_with_id = update_record.copy()
+            records_to_update.append({
+                'job_id': job_id,
+                'data': update_record,
+                'fields': updated_fields
+            })
+            print(f'  ✅ Запись {job_id}: будут обновлены поля {", ".join(updated_fields)}')
+        else:
+            print(f'  ℹ️ Запись {job_id}: все нужные поля уже заполнены')
     else:
-        # Новая запись
+        # Новая запись - добавляем целиком
         now_iso = datetime.now(timezone.utc).isoformat()
         if is_field_empty(record.get('created_at')):
             record['created_at'] = now_iso
@@ -116,65 +131,76 @@ for record in records:
             record['updated_at'] = now_iso
         if is_field_empty(record.get('status')):
             record['status'] = 'active'
-    
-    # Финальная очистка от NaN перед отправкой
-    cleaned_record = {}
-    for k, v in record.items():
-        cleaned_record[k] = clean_value(v)
-    
-    records_to_upsert.append(cleaned_record)
-
-print(f'\n📦 Подготовлено записей для upsert: {len(records_to_upsert)}')
-
-if not records_to_upsert:
-    print('❌ Нет данных для загрузки')
-    exit(0)
-
-# Настройки для upsert
-upsert_headers = headers.copy()
-upsert_headers['Prefer'] = 'resolution=merge-duplicates,return-minimal'
-
-# Отправляем данные
-print('🚀 Отправляем данные в Supabase...')
-
-try:
-    response = requests.post(
-        f'{SUPABASE_URL}/rest/v1/{TABLE_NAME}',
-        headers=upsert_headers,
-        json=records_to_upsert
-    )
-    
-    if response.ok:
-        print(f'✅ Успешно загружено/обновлено {len(records_to_upsert)} записей')
-    else:
-        print(f'❌ Ошибка: {response.status_code}')
-        print(response.text)
         
-        # Если массовая не сработала, пробуем по одной
-        print('\n🔍 Пробую по одной записи:')
-        success_count = 0
-        for i, record in enumerate(records_to_upsert, 1):
-            print(f'  Запись {i}, job_id = {record.get("job_id")}')
-            try:
+        records_to_insert.append(record)
+        print(f'  🆕 Запись {job_id} будет добавлена как новая')
+
+print(f'\n📊 Статистика:')
+print(f'  - Будет обновлено (частично): {len(records_to_update)} записей')
+print(f'  - Будет добавлено новых: {len(records_to_insert)} записей')
+
+# Обновляем существующие записи (только пустые поля)
+print('\n🚀 Заполняем пустые поля в существующих записях...')
+update_count = 0
+for item in records_to_update:
+    job_id = item['job_id']
+    update_data = item['data']
+    fields = item['fields']
+    
+    print(f'  Обновление job_id {job_id} (поля: {", ".join(fields)})...')
+    try:
+        resp = requests.patch(
+            f'{SUPABASE_URL}/rest/v1/{TABLE_NAME}?job_id=eq.{job_id}',
+            headers=headers,
+            json=update_data
+        )
+        
+        if resp.ok:
+            update_count += 1
+            print(f'    ✅ Успешно обновлено')
+        else:
+            print(f'    ❌ Ошибка: {resp.status_code} - {resp.text}')
+    except Exception as e:
+        print(f'    ❌ Исключение: {e}')
+
+# Добавляем новые записи
+if records_to_insert:
+    print(f'\n🚀 Добавляем новые записи...')
+    insert_headers = headers.copy()
+    insert_headers['Prefer'] = 'return-minimal'
+    
+    try:
+        resp = requests.post(
+            f'{SUPABASE_URL}/rest/v1/{TABLE_NAME}',
+            headers=insert_headers,
+            json=records_to_insert
+        )
+        
+        if resp.ok:
+            print(f'  ✅ Успешно добавлено {len(records_to_insert)} новых записей')
+        else:
+            print(f'  ❌ Ошибка при добавлении: {resp.status_code} - {resp.text}')
+            
+            # Если массовое не сработало, добавляем по одной
+            print('  🔍 Добавляем по одной...')
+            insert_count = 0
+            for record in records_to_insert:
                 resp = requests.post(
                     f'{SUPABASE_URL}/rest/v1/{TABLE_NAME}',
-                    headers=upsert_headers,
-                    json=[record]  # Отправляем как массив из одного элемента
+                    headers=insert_headers,
+                    json=[record]
                 )
                 if resp.ok:
-                    success_count += 1
-                    print(f'    ✅ Успешно')
+                    insert_count += 1
+                    print(f'    ✅ Добавлена вакансия {record.get("job_id")}')
                 else:
-                    print(f'    ❌ Ошибка: {resp.text}')
-            except Exception as e:
-                print(f'    ❌ Исключение: {e}')
-        
-        print(f'\n📊 Итог: {success_count} из {len(records_to_upsert)} записей загружено')
-        
-except Exception as e:
-    print(f'❌ Критическая ошибка: {e}')
-    
-    # Сохраним проблемные данные для отладки
-    with open('debug_failed_data.json', 'w', encoding='utf-8') as f:
-        json.dump(records_to_upsert, f, indent=2, ensure_ascii=False, default=str)
-    print('📁 Проблемные данные сохранены в debug_failed_data.json')
+                    print(f'    ❌ Ошибка при добавлении {record.get("job_id")}: {resp.text}')
+            print(f'  ✅ Добавлено {insert_count} из {len(records_to_insert)}')
+    except Exception as e:
+        print(f'  ❌ Ошибка при массовом добавлении: {e}')
+else:
+    print('ℹ️ Нет новых записей для добавления')
+
+print(f'\n📊 ИТОГ:')
+print(f'  - Заполнено пустых полей: {update_count} из {len(records_to_update)}')
+print(f'  - Добавлено новых вакансий: {len(records_to_insert)}')
