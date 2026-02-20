@@ -10,16 +10,29 @@ FIELDS = [
     ('title', 'name'),
     ('project', lambda j, org_map=None: get_project_department(j, org_map)[0]),
     ('department', lambda j, org_map=None: get_project_department(j, org_map)[1]),
-    # Теперь берем поля напрямую из API!
-    ('description', lambda j: j.get('description', '')),                    # из API
-    ('requirements', lambda j: j.get('requirements', '')),                  # из API
-    ('responsibilities', lambda j: j.get('responsibilities', '')),          # из API  
-    ('conditions', lambda j: j.get('conditions', '')),                      # из API
+    ('description', lambda j: clean_html(j.get('description', ''))),
+    ('requirements', lambda j: get_custom_field(j, 'Toruk_Job_Requirements')),
+    ('responsibilities', lambda j: get_custom_field(j, 'Toruk_Job_Responsibilities')),
+    ('conditions', lambda j: get_custom_field(j, 'Toruk_Job_Conditions')),
     ('created_at', 'dateCreated'),
     ('updated_at', 'dateUpdated'),
     ('status', 'CONST_ACTIVE'),
 ]
 
+def clean_html(text):
+    """Очистка HTML тегов"""
+    if not text:
+        return ''
+    # Простая очистка - можно добавить более сложную если нужно
+    return text.replace('<p>', '\n').replace('</p>', '\n').replace('<br />', '\n').replace('<ul>', '\n').replace('</ul>', '\n').replace('<li>', '• ').replace('</li>', '\n')
+
+def get_custom_field(job, system_name):
+    """Получение значения из customFieldValues"""
+    custom_fields = job.get('customFieldValues', [])
+    for field in custom_fields:
+        if field.get('SystemName') == system_name:
+            return clean_html(field.get('Value', ''))
+    return ''
 
 def get_value(job, key, org_map=None):
     # Специальный случай для статуса
@@ -58,7 +71,6 @@ def main():
         org_data = json.load(f_org)
         org_map = {unit['foreignKey']: unit for unit in org_data['organizationUnits']}
 
-    # Читаем напрямую из jobs_full.json (ответ API), а не из jobs_structured.json
     with open('jobs_full.json', encoding='utf-8') as f:
         jobs = json.load(f)
     
@@ -68,9 +80,15 @@ def main():
         writer = csv.writer(f)
         writer.writerow([f[0] for f in FIELDS])
         
-        filled_count = 0
+        stats = {'requirements': 0, 'responsibilities': 0, 'conditions': 0}
+        
         for job in jobs:
             row = [get_value(job, f[1], org_map=org_map) for f in FIELDS]
+            
+            # Статистика
+            if row[7]: stats['requirements'] += 1  # requirements
+            if row[8]: stats['responsibilities'] += 1  # responsibilities
+            if row[9]: stats['conditions'] += 1  # conditions
             
             # Преобразуем даты в ISO, если есть
             for i, field in enumerate([f[0] for f in FIELDS]):
@@ -79,15 +97,13 @@ def main():
                         row[i] = datetime.fromisoformat(row[i]).isoformat()
                     except Exception:
                         pass
-            
             writer.writerow(row)
-            
-            # Статистика по заполненным полям
-            if row[6] or row[7] or row[8] or row[9]:  # description, requirements, responsibilities, conditions
-                filled_count += 1
         
         print(f"✅ Создан jobs_supabase.csv")
-        print(f"📊 Вакансий с заполненными полями: {filled_count} из {len(jobs)}")
+        print(f"📊 Статистика по кастомным полям:")
+        print(f"  - Требования: {stats['requirements']} вакансий")
+        print(f"  - Обязанности: {stats['responsibilities']} вакансий")
+        print(f"  - Условия: {stats['conditions']} вакансий")
 
 if __name__ == '__main__':
     main()
