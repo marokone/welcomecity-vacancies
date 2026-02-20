@@ -36,24 +36,49 @@ jobs:
             page=$((page+1))
           done
 
-          details=()
+          echo "✅ Найдено вакансий: ${#jobids[@]}"
+
+          # Сохраняем все детали в один файл
+          echo "🔄 Загружаем детали вакансий..."
+          echo '[' > Beliy_Mys_VAC/jobs_full.json
+          first=1
           for jobid in "${jobids[@]}"; do
+            echo "  Загружаю вакансию $jobid..."
             detail=$(curl -s -X GET \
               --header 'Accept: application/json' \
               --header "Authorization: Bearer ${{ secrets.FRIENDWORK_API_TOKEN }}" \
               "https://api.friend.work/jobs/$jobid")
+            
             if echo "$detail" | jq empty 2>/dev/null; then
-              details+=("$detail")
+              if [ $first -eq 1 ]; then
+                first=0
+              else
+                echo ',' >> Beliy_Mys_VAC/jobs_full.json
+              fi
+              echo "$detail" >> Beliy_Mys_VAC/jobs_full.json
+              echo "    ✅ Успешно"
+            else
+              echo "    ❌ Ошибка: невалидный JSON"
             fi
           done
-
-          printf '%s\n' "${details[@]}" | jq -s '.' > Beliy_Mys_VAC/jobs_full.json
+          echo ']' >> Beliy_Mys_VAC/jobs_full.json
 
       - name: Upload jobs_full.json
         uses: actions/upload-artifact@v4
         with:
           name: friendwork-jobs-full
           path: Beliy_Mys_VAC/jobs_full.json
+
+      - name: Debug jobs_full.json
+        run: |
+          echo "📊 Статистика по кастомным полям:"
+          jq '[.[].customFieldValues[] | select(.SystemName | startswith("Toruk_Job_")) | .SystemName] | unique' Beliy_Mys_VAC/jobs_full.json
+          
+          echo ""
+          echo "📊 Количество вакансий с полями:"
+          echo "  Requirements: $(jq '[.[].customFieldValues[] | select(.SystemName=="Toruk_Job_Requirements")] | length' Beliy_Mys_VAC/jobs_full.json)"
+          echo "  Responsibilities: $(jq '[.[].customFieldValues[] | select(.SystemName=="Toruk_Job_Responsibilities")] | length' Beliy_Mys_VAC/jobs_full.json)"
+          echo "  Conditions: $(jq '[.[].customFieldValues[] | select(.SystemName=="Toruk_Job_Conditions")] | length' Beliy_Mys_VAC/jobs_full.json)"
 
       - name: Установить Python и зависимости
         run: |
