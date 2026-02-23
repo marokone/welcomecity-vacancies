@@ -17,8 +17,38 @@ FIELDS = [
     ('conditions', lambda j: normalize_list_format(get_custom_field_raw(j, 'Toruk_Job_Conditions'))),
     ('created_at', 'dateCreated'),
     ('updated_at', 'dateUpdated'),
-    ('status', 'CONST_ACTIVE'),
+    ('status', lambda j: determine_status(j)),  # Изменено!
 ]
+
+def determine_status(job):
+    """Определяет статус вакансии на основе заполненности полей"""
+    # Получаем значения полей
+    description = job.get('description', '')
+    requirements = get_custom_field_raw(job, 'Toruk_Job_Requirements')
+    responsibilities = get_custom_field_raw(job, 'Toruk_Job_Responsibilities')
+    conditions = get_custom_field_raw(job, 'Toruk_Job_Conditions')
+    
+    # Очищаем от HTML-тегов для проверки
+    def has_content(text):
+        if not text:
+            return False
+        # Убираем HTML-теги
+        clean = re.sub(r'<[^>]+>', '', text)
+        # Убираем маркеры списков и пробелы
+        clean = re.sub(r'^[•\-*\d.]+\s*', '', clean)
+        clean = clean.strip()
+        return len(clean) > 10  # Хотя бы 10 символов содержательного текста
+    
+    # Проверяем заполненность всех полей
+    all_fields_filled = (
+        has_content(description) and
+        has_content(requirements) and
+        has_content(responsibilities) and
+        has_content(conditions)
+    )
+    
+    # Возвращаем статус
+    return 'active' if all_fields_filled else 'archived'
 
 def normalize_list_format(text):
     """Преобразует любой формат списка в единый HTML-список"""
@@ -108,13 +138,24 @@ def clean_html(text):
     """Очистка HTML тегов для описания"""
     if not text:
         return ''
-    # Убираем теги, но сохраняем переносы строк
+    
+    # Заменяем экранированные \n на реальные переносы
+    text = text.replace('\\n', '\n')
+    
+    # Обрабатываем HTML-теги
     text = re.sub(r'<br\s*/?>', '\n', text)
     text = re.sub(r'<p>', '\n', text)
     text = re.sub(r'</p>', '\n', text)
     text = re.sub(r'<[^>]+>', ' ', text)
-    text = re.sub(r'\s+', ' ', text).strip()
-    return fix_html_entities(text)
+    
+    # Нормализуем переносы
+    text = re.sub(r'\n\s*\n', '\n\n', text)
+    text = re.sub(r' +', ' ', text)
+    
+    # Исправляем HTML-сущности
+    text = fix_html_entities(text)
+    
+    return text.strip()
 
 def get_custom_field_raw(job, system_name):
     """Получение сырого значения из customFieldValues без очистки"""
@@ -125,10 +166,6 @@ def get_custom_field_raw(job, system_name):
     return ''
 
 def get_value(job, key, org_map=None):
-    # Специальный случай для статуса
-    if key == 'CONST_ACTIVE':
-        return 'active'
-    
     if callable(key):
         try:
             return key(job, org_map=org_map)
@@ -166,6 +203,9 @@ def main():
     
     print(f"📥 Загружено вакансий из API: {len(jobs)}")
     
+    # Статистика по статусам
+    status_stats = {'active': 0, 'archived': 0}
+    
     with open('jobs_supabase.csv', 'w', encoding='utf-8', newline='') as f:
         writer = csv.writer(f)
         writer.writerow([f[0] for f in FIELDS])
@@ -175,10 +215,13 @@ def main():
         for job in jobs:
             row = [get_value(job, f[1], org_map=org_map) for f in FIELDS]
             
-            # Статистика
+            # Статистика по полям
             if row[7]: stats['requirements'] += 1
             if row[8]: stats['responsibilities'] += 1
             if row[9]: stats['conditions'] += 1
+            
+            # Статистика по статусам (статус в 12-й колонке)
+            status_stats[row[12]] = status_stats.get(row[12], 0) + 1
             
             # Преобразуем даты в ISO, если есть
             for i, field in enumerate([f[0] for f in FIELDS]):
@@ -194,6 +237,9 @@ def main():
         print(f"  - Требования: {stats['requirements']} вакансий")
         print(f"  - Обязанности: {stats['responsibilities']} вакансий")
         print(f"  - Условия: {stats['conditions']} вакансий")
+        print(f"📊 Статистика по статусам:")
+        print(f"  - Активных: {status_stats['active']} вакансий")
+        print(f"  - В архиве: {status_stats['archived']} вакансий")
 
 if __name__ == '__main__':
     main()
