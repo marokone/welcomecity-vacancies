@@ -34,6 +34,13 @@ def is_field_empty(value):
     cleaned = clean_value(value)
     return cleaned is None or cleaned == ''
 
+def is_vacancy_complete(record):
+    """Проверяет, заполнены ли все основные поля (не пустые)"""
+    for field in MANUAL_FIELDS:
+        if is_field_empty(record.get(field)):
+            return False
+    return True
+
 # Загрузка данных из CSV
 csv_path = 'vacancies_rows.csv'
 df = pd.read_csv(csv_path, dtype=str)
@@ -78,7 +85,7 @@ print(f'📊 Найдено записей в Supabase: {len(existing_data)}')
 # Создаем словарь существующих записей по job_id
 existing_map = {str(item['job_id']): item for item in existing_data if item.get('job_id')}
 
-# Подготавливаем данные для обновления (только пустые поля)
+# Подготавливаем данные для обновления
 records_to_update = []
 records_to_insert = []
 
@@ -89,31 +96,40 @@ for record in records:
         print('⚠️ Пропущена запись без job_id')
         continue
     
+    # Определяем автоматический статус на основе заполненности
+    auto_status = 'active' if is_vacancy_complete(record) else 'archived'
+    
     # Если запись уже существует в Supabase
     if job_id in existing_map:
         existing = existing_map[job_id]
         
-        # Создаем запись для обновления только пустых полей
+        # Создаем запись для обновления
         update_record = {}
         updated_fields = []
         
-        # Проверяем каждое поле в существующей записи
+        # 1. Обновляем основные поля (только если они пустые в Supabase)
         for field in MANUAL_FIELDS:
             existing_value = existing.get(field)
             new_value = record.get(field)
             
-            # Если в Supabase поле пустое, И во френдворке есть данные
             if is_field_empty(existing_value) and not is_field_empty(new_value):
                 update_record[field] = new_value
                 updated_fields.append(field)
-                print(f'  ✨ Поле {field} для job_id {job_id}: заполняем пустое поле данными из френдворка')
-            else:
-                print(f'  🔄 Поле {field} для job_id {job_id}: оставляем как есть')
+                print(f'  ✨ Поле {field} для job_id {job_id}: заполняем пустое поле')
+        
+        # 2. Обновляем статус ТОЛЬКО если нет ручного статуса
+        manual_status = existing.get('manual_status')
+        if is_field_empty(manual_status):
+            # Нет ручного статуса - используем автостатус
+            if existing.get('status') != auto_status:
+                update_record['status'] = auto_status
+                updated_fields.append('status')
+                print(f'  🔄 Автостатус для job_id {job_id}: -> {auto_status}')
+        else:
+            print(f'  🖐️ Ручной статус для job_id {job_id}: {manual_status} (не меняем)')
         
         # Если есть что обновлять
         if updated_fields:
-            # Добавляем job_id в update_record для фильтра
-            update_record_with_id = update_record.copy()
             records_to_update.append({
                 'job_id': job_id,
                 'data': update_record,
@@ -121,7 +137,7 @@ for record in records:
             })
             print(f'  ✅ Запись {job_id}: будут обновлены поля {", ".join(updated_fields)}')
         else:
-            print(f'  ℹ️ Запись {job_id}: все нужные поля уже заполнены')
+            print(f'  ℹ️ Запись {job_id}: все поля уже актуальны')
     else:
         # Новая запись - добавляем целиком
         now_iso = datetime.now(timezone.utc).isoformat()
@@ -129,18 +145,20 @@ for record in records:
             record['created_at'] = now_iso
         if is_field_empty(record.get('updated_at')):
             record['updated_at'] = now_iso
-        if is_field_empty(record.get('status')):
-            record['status'] = 'active'
+        
+        # Для новых записей ставим автостатус
+        record['status'] = auto_status
+        # manual_status оставляем пустым
         
         records_to_insert.append(record)
-        print(f'  🆕 Запись {job_id} будет добавлена как новая')
+        print(f'  🆕 Запись {job_id} будет добавлена как новая со статусом "{auto_status}"')
 
 print(f'\n📊 Статистика:')
-print(f'  - Будет обновлено (частично): {len(records_to_update)} записей')
+print(f'  - Будет обновлено: {len(records_to_update)} записей')
 print(f'  - Будет добавлено новых: {len(records_to_insert)} записей')
 
-# Обновляем существующие записи (только пустые поля)
-print('\n🚀 Заполняем пустые поля в существующих записях...')
+# Обновляем существующие записи
+print('\n🚀 Обновляем существующие записи...')
 update_count = 0
 for item in records_to_update:
     job_id = item['job_id']
@@ -202,5 +220,5 @@ else:
     print('ℹ️ Нет новых записей для добавления')
 
 print(f'\n📊 ИТОГ:')
-print(f'  - Заполнено пустых полей: {update_count} из {len(records_to_update)}')
-print(f'  - Добавлено новых вакансий: {len(records_to_insert)}')
+print(f'  - Обновлено записей: {update_count} из {len(records_to_update)}')
+print(f'  - Добавлено новых: {len(records_to_insert)}')
