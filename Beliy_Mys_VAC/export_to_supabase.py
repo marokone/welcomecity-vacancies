@@ -1,5 +1,6 @@
 import json
 import csv
+import re
 from datetime import datetime
 
 # Какие поля нужны для Supabase
@@ -11,27 +12,116 @@ FIELDS = [
     ('project', lambda j, org_map=None: get_project_department(j, org_map)[0]),
     ('department', lambda j, org_map=None: get_project_department(j, org_map)[1]),
     ('description', lambda j: clean_html(j.get('description', ''))),
-    ('requirements', lambda j: get_custom_field(j, 'Toruk_Job_Requirements')),
-    ('responsibilities', lambda j: get_custom_field(j, 'Toruk_Job_Responsibilities')),
-    ('conditions', lambda j: get_custom_field(j, 'Toruk_Job_Conditions')),
+    ('requirements', lambda j: normalize_list_format(get_custom_field_raw(j, 'Toruk_Job_Requirements'))),
+    ('responsibilities', lambda j: normalize_list_format(get_custom_field_raw(j, 'Toruk_Job_Responsibilities'))),
+    ('conditions', lambda j: normalize_list_format(get_custom_field_raw(j, 'Toruk_Job_Conditions'))),
     ('created_at', 'dateCreated'),
     ('updated_at', 'dateUpdated'),
     ('status', 'CONST_ACTIVE'),
 ]
 
-def clean_html(text):
-    """Очистка HTML тегов"""
+def normalize_list_format(text):
+    """Преобразует любой формат списка в единый HTML-список"""
     if not text:
         return ''
-    # Простая очистка - можно добавить более сложную если нужно
-    return text.replace('<p>', '\n').replace('</p>', '\n').replace('<br />', '\n').replace('<ul>', '\n').replace('</ul>', '\n').replace('<li>', '• ').replace('</li>', '\n')
+    
+    # Если текст уже содержит правильный HTML-список, оставляем как есть
+    if '<ul style="margin:0; padding-left:20px; list-style-type:disc;"' in text:
+        return text
+    
+    # Если есть HTML-теги, извлекаем текст
+    if '<li>' in text:
+        # Извлекаем текст из li
+        items = re.findall(r'<li[^>]*>(.*?)</li>', text, re.DOTALL)
+        if items:
+            # Очищаем от внутренних тегов
+            clean_items = []
+            for item in items:
+                clean_item = re.sub(r'<[^>]+>', '', item).strip()
+                if clean_item:
+                    clean_items.append(clean_item)
+            return create_html_list(clean_items)
+    
+    # Разбиваем на строки
+    lines = text.split('\n')
+    items = []
+    
+    for line in lines:
+        line = line.strip()
+        if not line:
+            continue
+        
+        # Убираем маркеры списка в начале (•, -, *, цифры и т.д.)
+        line = re.sub(r'^[•\-*\d.]+\s*', '', line)
+        # Убираем HTML-теги
+        line = re.sub(r'<[^>]+>', '', line)
+        # Убираем множественные пробелы
+        line = re.sub(r'\s+', ' ', line).strip()
+        
+        # Исправляем HTML-сущности
+        line = fix_html_entities(line)
+        
+        if line:
+            items.append(line)
+    
+    if not items:
+        return fix_html_entities(text)
+    
+    return create_html_list(items)
 
-def get_custom_field(job, system_name):
-    """Получение значения из customFieldValues"""
+def create_html_list(items):
+    """Создаёт HTML-список из массива элементов"""
+    list_html = '<ul style="margin:0; padding-left:20px; list-style-type:disc;">'
+    for item in items:
+        # Добавляем точку в конце, если её нет
+        if item and not item[-1] in '.!?':
+            item += '.'
+        list_html += f'<li style="margin-bottom:8px; line-height:1.5;">{item}</li>'
+    list_html += '</ul>'
+    return list_html
+
+def fix_html_entities(text):
+    """Исправляет HTML-сущности"""
+    if not text:
+        return text
+    
+    replacements = {
+        '&mdash;': '—',
+        '&mdash': '—',
+        '&laquo;': '«',
+        '&raquo;': '»',
+        '&nbsp;': ' ',
+        '&nbsp': ' ',
+        '&amp;': '&',
+        '&amp': '&',
+        '&lt;': '<',
+        '&gt;': '>',
+        '&quot;': '"',
+    }
+    
+    for entity, char in replacements.items():
+        text = text.replace(entity, char)
+    
+    return text
+
+def clean_html(text):
+    """Очистка HTML тегов для описания"""
+    if not text:
+        return ''
+    # Убираем теги, но сохраняем переносы строк
+    text = re.sub(r'<br\s*/?>', '\n', text)
+    text = re.sub(r'<p>', '\n', text)
+    text = re.sub(r'</p>', '\n', text)
+    text = re.sub(r'<[^>]+>', ' ', text)
+    text = re.sub(r'\s+', ' ', text).strip()
+    return fix_html_entities(text)
+
+def get_custom_field_raw(job, system_name):
+    """Получение сырого значения из customFieldValues без очистки"""
     custom_fields = job.get('customFieldValues', [])
     for field in custom_fields:
         if field.get('SystemName') == system_name:
-            return clean_html(field.get('Value', ''))
+            return field.get('Value', '')
     return ''
 
 def get_value(job, key, org_map=None):
@@ -86,9 +176,9 @@ def main():
             row = [get_value(job, f[1], org_map=org_map) for f in FIELDS]
             
             # Статистика
-            if row[7]: stats['requirements'] += 1  # requirements
-            if row[8]: stats['responsibilities'] += 1  # responsibilities
-            if row[9]: stats['conditions'] += 1  # conditions
+            if row[7]: stats['requirements'] += 1
+            if row[8]: stats['responsibilities'] += 1
+            if row[9]: stats['conditions'] += 1
             
             # Преобразуем даты в ISO, если есть
             for i, field in enumerate([f[0] for f in FIELDS]):
