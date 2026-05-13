@@ -4,8 +4,8 @@ import requests
 import json
 from datetime import datetime, timezone
 
-SUPABASE_URL = 'https://vhbiezamhpyejdqvvwuj.supabase.co'
-SUPABASE_API_KEY = 'sb_publishable_PEUJVHuw56T2d3vA2iVMZA_POiY0MCX'
+SUPABASE_URL = 'https://https://hrwinecity.ru'
+SUPABASE_API_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoic2VydmljZV9yb2xlIiwiaXNzIjoic3VwYWJhc2UiLCJpYXQiOjE3Nzg2NjgyNDEsImV4cCI6MTkzNjM0ODI0MX0.3A242YDdvSmmqzpm_YxgirvvbgbNoKaGxdxKJ5x4Mw0'
 TABLE_NAME = 'vacancies_fw'
 
 # Поля, которые могут быть заполнены вручную в Тильде
