@@ -1,12 +1,18 @@
+import os
 import math
 import pandas as pd
 import requests
 import json
 from datetime import datetime, timezone
 
-SUPABASE_URL = 'https://https://hrwinecity.ru'
-SUPABASE_API_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoic2VydmljZV9yb2xlIiwiaXNzIjoic3VwYWJhc2UiLCJpYXQiOjE3Nzg2NjgyNDEsImV4cCI6MTkzNjM0ODI0MX0.3A242YDdvSmmqzpm_YxgirvvbgbNoKaGxdxKJ5x4Mw0'
+# Читаем из переменных окружения (устанавливаются в GitHub Action)
+SUPABASE_URL = os.environ.get('SUPABASE_URL', 'https://hrwinecity.ru')
+SUPABASE_API_KEY = os.environ.get('SUPABASE_SERVICE_ROLE_KEY', '')
 TABLE_NAME = 'vacancies_fw'
+
+# Проверяем, что ключ передан
+if not SUPABASE_API_KEY:
+    raise ValueError("SUPABASE_SERVICE_ROLE_KEY not set in environment")
 
 # Поля, которые могут быть заполнены вручную в Тильде
 MANUAL_FIELDS = ['description', 'requirements', 'responsibilities', 'conditions']
