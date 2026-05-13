@@ -9,8 +9,9 @@ output_path = 'vacancies_rows.csv'
 src = pd.read_csv(input_path, dtype=str)
 
 # Формируем итоговый DataFrame с нужными столбцами и порядком
+# ⚠️ НЕ генерируем id, оставляем как есть (из FriendWork)
 result = pd.DataFrame({
-    'id': range(1, len(src) + 1),
+    'id': src['job_id'],  # используем job_id как id
     'title': src['title'],
     'project': src['project'],
     'department': src['department'],
@@ -19,7 +20,7 @@ result = pd.DataFrame({
     'responsibilities': src['responsibilities'],
     'conditions': src['conditions'],
     'format': '',  # если нужно заполнить - добавь логику
-    'status': src['status'],  # берем из исходных данных (там 'active')
+    'status': src['status'],  # берем из исходных данных
     'created_at': src['created_at'],
     'updated_at': src['updated_at'],
     'job_id': src['job_id'],
