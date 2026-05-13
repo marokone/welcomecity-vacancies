@@ -882,3 +882,25 @@
     padding: var(--spacing-lg);
   }
 }
+
+/* Перебиваем оранжевые ссылки от Тильды */
+#allrecords a.vacancy-card,
+.t-records a.vacancy-card,
+.vacancy-card,
+.vacancy-card:link,
+.vacancy-card:visited,
+.vacancy-card:hover {
+    color: #111111 !important;
+    text-decoration: none !important;
+}
+
+/* Для заголовка вакансии */
+.vacancy-card h3,
+.vacancy-content h3 {
+    color: #111111 !important;
+}
+
+/* Для мета-информации */
+.vacancy-meta {
+    color: #666666 !important;
+}
